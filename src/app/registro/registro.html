@@ -1,0 +1,74 @@
+<!-- TOPBAR FIJA -->
+<div class="w-full bg-[#5B9BBe] py-4 flex items-center justify-center rounded-b-2xl shadow-md fixed top-0 left-0 z-10">
+    <h1 class="text-white text-xl font-bold tracking-wide">PYEXPRESS</h1>
+</div>
+
+<!-- CONTENEDOR QUE RELLENA TODA LA PANTALLA (menos el topbar) -->
+<div class="w-full" style="height: calc(100vh - 72px); margin-top: 72px;">
+
+    <!-- FORMULARIO que ocupa TODO el espacio -->
+    <div class="w-full h-full bg-white flex items-start justify-center px-4 pt-2">
+
+        <div class="w-full max-w-md">
+            <h2 class="text-lg font-semibold text-gray-800 mb-1">Registrarse</h2>
+            <p class="text-sm text-gray-500 mb-6">Ingresa tus datos para crear una cuenta</p>
+
+            <label class="block mb-2 text-sm font-medium text-gray-700" for="nombres">Nombres</label>
+            <input type="text" id="nombres" [(ngModel)]="nombres"
+                class="w-full px-4 py-2 border rounded-md focus:outline-none focus:ring-2 focus:ring-[#5B9BBe]"
+            />
+
+            <label class="block mt-2 mb-2 text-sm font-medium text-gray-700" for="apellidos">Apellidos</label>
+            <input type="text" id="apellidos" [(ngModel)]="apellidos"
+                class="w-full px-4 py-2 border rounded-md focus:outline-none focus:ring-2 focus:ring-[#5B9BBe]"
+            />
+    
+            <!-- Correo -->
+            <label class="block mt-2 mb-2 text-sm font-medium text-gray-700" for="correo">Correo</label>
+            <input type="email" id="correo" [(ngModel)]="correo"
+                class="w-full px-4 py-2 border rounded-md focus:outline-none focus:ring-2 focus:ring-[#5B9BBe]"
+                placeholder="ejemplo@correo.com" 
+            />
+
+            <!-- Contraseña -->
+            <label class="block mt-2 mb-2 text-sm font-medium text-gray-700" for="password">Contraseña</label>
+            <div class="relative">
+                <input [type]="verPassword ? 'text' : 'password'" id="password" [(ngModel)]="password"
+                    class="w-full px-4 py-2 border rounded-md focus:outline-none focus:ring-2 focus:ring-[#5B9BBe]" />
+                    <i 
+                    class="absolute right-3 top-1/2 transform -translate-y-1/2 cursor-pointer text-gray-500"
+                    [ngClass]="verPassword ? 'pi pi-eye-slash' : 'pi pi-eye'"
+                    (click)="verPassword = !verPassword">
+                  </i>
+            </div>
+            <label class="block mt-2 mb-2 text-sm font-medium text-gray-700" for="edad">Edad</label>
+            <input type="text" id="edad" [(ngModel)]="edad"
+                class="w-full px-4 py-2 border rounded-md focus:outline-none focus:ring-2 focus:ring-[#5B9BBe]"
+            />
+
+            <label class="block mt-2 mb-2 text-sm font-medium text-gray-700" for="carrera">Carrera</label>
+            <select id="carrera" [(ngModel)]="carreraSeleccionadaId"
+                [(ngModel)]="carreraSeleccionada"
+                class="w-full px-4 py-2 border rounded-md focus:outline-none focus:ring-2 focus:ring-[#5B9BBe]">
+                <option value="" disabled selected>Selecciona tu carrera</option>
+                <option *ngFor="let carrera of carreras" [value]="carrera.nombre">
+                    {{ carrera.nombre }}
+                </option>
+            </select>
+
+            <!-- Olvidé mi contraseña -->
+            <div class="text-sm mt-2 mb-6">
+                <a href="#" class="text-[#4C8C64] hover:underline">Olvidé mi contraseña</a>
+            </div> 
+
+            <!-- Botón de inicio de sesión -->
+            <button (click)="registrarUsuario()"
+                class="w-full bg-[#4C8C64] hover:bg-[#3a6e4e] text-white font-semibold py-2 px-4 rounded-md flex justify-center items-center gap-2 mb-4">
+                Iniciar sesión
+                <i class="pi pi-arrow-right"></i>
+            </button>
+
+        </div>
+
+    </div>
+</div>

@@ -1,0 +1,139 @@
+
+<router-outlet></router-outlet>
+<div class="">
+    <div class="w-full bg-[#5B9BBe] py-8 px-6 flex flex-col rounded-b-2xl shadow-md fixed top-0 left-0 z-10">
+        <!-- Título centrado -->
+        <div class="fixed top-4 left-4 z-50">
+            <button (click)="toggleMenu()" class="text-white focus:outline-none">
+              <i class="pi pi-bars text-2xl"></i>
+            </button>
+        </div>
+        <div class="w-full flex justify-center">
+            <h1 class="text-white font-extrabold text-lg tracking-wide">PYEXPRESS</h1>
+        </div>
+
+        <!-- Usuario -->
+        <div class="flex items-center justify-between mt-6">
+            <div>
+                <h2 class="text-[#1e1b4b] font-extrabold text-lg leading-5">{{ nombreUsuario }}</h2>
+                <p class="text-[#1e1b4b] text-sm mt-[2px]">{{ apellidoUsuario }}</p>
+                <p class="text-white font-bold text-sm mt-2">25 puntos</p>
+                <button class="border border-white text-white px-4 py-1 rounded-full text-sm hover:bg-white hover:text-[#1e1b4b] transition mt-2">
+                    Videojuegos
+                </button>
+                <button class="border border-white text-white px-4 py-1 rounded-full text-sm hover:bg-white hover:text-[#1e1b4b] transition mt-1">
+                    Crear historietas
+                </button>
+            </div>
+            <img src="avatar.png" alt="avatar" class="w-45 h-45 object-contain -mb-8" />
+        </div>
+    </div>
+
+
+
+    <!-- CONTENEDOR QUE RELLENA TODA LA PANTALLA (menos el topbar) -->
+    <div class="w-full max-w-md px-4" style="height: calc(100vh - 72px); margin-top: 280px;">
+        <div class="space-y-6">
+      
+          <!-- Título superior -->
+          <div class="flex justify-between items-center">
+            <h2 class="text-lg font-semibold">¿Creamos algo nuevo?</h2>
+            <a href="#" class="text-blue-500 text-sm font-medium">Ver más</a>
+          </div>
+      
+          <!-- Tarjeta de creación de historieta -->
+          <div class="bg-[#a6d3e6] p-4 rounded-xl shadow">
+            <div class="flex items-start space-x-3">
+              <div class="bg-blue-300 p-2 rounded-full">
+                <svg class="w-6 h-6 text-white" fill="none" stroke="currentColor" stroke-width="2"
+                  viewBox="0 0 24 24">
+                  <path stroke-linecap="round" stroke-linejoin="round"
+                    d="M12 20l9-5-9-5-9 5 9 5z" />
+                </svg>
+              </div>
+              <div>
+                <h3 class="text-white font-bold">¡Crea una historieta ahora!</h3>
+                <p class="text-sm text-white font-semibold">Morbi gravida in arcu sed scelerisque. Integer bibendum ante vitae est consequat feugiat. Proin consequat.</p>
+              </div>
+            </div>
+          </div>
+      
+          <!-- Nuevos artículos -->
+          <div class="space-y-3">
+            <div class="flex justify-between items-center">
+              <h2 class="text-lg font-semibold">Nuevos artículos en tienda</h2>
+              <a href="#" class="text-blue-500 text-sm font-medium">Ver más</a>
+            </div>
+            <div class="flex space-x-3 overflow-x-auto">
+              <div class="relative bg-gray-100 rounded-xl p-4 w-32 h-24 flex items-center justify-center">
+                <img src="/ruta/a/tu/imagen.png" alt="Gorra" class="h-16 object-contain" />
+                <div class="absolute bottom-0 right-0 bg-blue-200 text-white text-sm px-2 py-1 rounded-tl-lg">
+                  8 pts
+                </div>
+              </div>
+              <div class="relative bg-gray-100 rounded-xl p-4 w-32 h-24 flex items-center justify-center">
+                <img src="/ruta/a/tu/imagen.png" alt="Gorra" class="h-16 object-contain" />
+                <div class="absolute bottom-0 right-0 bg-blue-200 text-white text-sm px-2 py-1 rounded-tl-lg">
+                  8 pts
+                </div>
+              </div>
+              <div class="relative bg-gray-100 rounded-xl p-4 w-32 h-24 flex items-center justify-center">
+                <img src="/ruta/a/tu/imagen.png" alt="Gorra" class="h-16 object-contain" />
+                <div class="absolute bottom-0 right-0 bg-blue-200 text-white text-sm px-2 py-1 rounded-tl-lg">
+                  8 pts
+                </div>
+              </div>
+            </div>
+          </div>
+      
+          <!-- Crear algo nuevo -->
+          <div class="space-y-2">
+            <h2 class="text-lg font-semibold">Crea algo nuevo</h2>
+            <div class="grid grid-cols-2 gap-4">
+              <button class="bg-[#a6d3e6] p-4 rounded-xl flex flex-col items-center justify-center shadow">
+                <img src="diagrma.jpg" alt="Diagramas" class="w-20 h-22 mb-2">
+                <span class="text-sm font-medium text-gray-800 text-center">Diagramas y historietas</span>
+              </button>
+              <button class="bg-[#a8d4b9] p-4 rounded-xl flex flex-col items-center justify-center shadow">
+                <img src="chat.jpg" alt="Chat con IA" class="w-20 h-22 mb-2">
+                <span class="text-sm font-medium text-gray-800 text-center">Chat con IA</span>
+              </button>
+            </div>
+          </div>
+      
+        </div>
+      </div>
+      
+</div>
+
+<!-- Fondo translúcido -->
+<div
+  class="fixed top-0 left-0 w-full h-full bg-[#5b9abd]/60 backdrop-blur-sm z-30 transition-opacity duration-300"
+  *ngIf="menuOpen"
+  (click)="toggleMenu()"
+></div>
+<div
+  class="fixed top-0 left-0 h-full w-[260px] bg-[#5b9abd] text-white z-40 transform transition-transform duration-300 ease-in-out"
+  [ngClass]="{ '-translate-x-full': !menuOpen, 'translate-x-0': menuOpen }">
+  <!-- Logo -->
+  <div class="text-center font-extrabold text-white text-xl py-6">
+    PYEXPRESS
+  </div>
+
+  <!-- Opciones del menú -->
+  <ul class="px-4 space-y-3">
+    <li
+      *ngFor="let item of menuItems"
+      [routerLink]="item.routerLink"
+      (click)="selectMenuItem(item.label)"
+      class="flex items-center gap-3 px-4 py-3 rounded-xl cursor-pointer transition-all duration-200"
+      [ngClass]="{
+        'bg-white text-[#5b9abd] shadow-md': selectedItem === item.label,
+        'hover:bg-white hover:text-[#5b9abd]': selectedItem !== item.label
+      }"
+    >
+      <i [class]="item.icon + ' text-lg'"></i>
+      <span class="text-sm font-semibold">{{ item.label }}</span>
+    </li>
+  </ul>
+</div>

@@ -1,0 +1,51 @@
+<div class="h-screen overflow-hidden">
+  <div class="w-full bg-[#5B9BBe] py-8 px-6 flex flex-col rounded-b-2xl shadow-md fixed top-0 left-0 z-10">
+    <!-- Título centrado -->
+    <div class="w-full flex justify-center">
+      <h1 class="text-white font-extrabold text-lg tracking-wide">PYEXPRESS</h1>
+    </div>
+  
+    <!-- Usuario -->
+    <div class="flex items-center justify-between mt-6">
+      <div>
+        <h2 class="text-[#1e1b4b] font-extrabold text-lg leading-5">{{ nombresUsuario }}</h2>
+        <p class="text-[#1e1b4b] text-sm mt-[2px]">{{ apellidosUsuario }}</p>
+        <p class="text-white font-bold text-sm mt-2">{{ puntosUsuario }}</p>
+      </div>
+      <img src="avatar.png" alt="avatar" class="w-45 h-45 object-contain -mb-8" />
+    </div>
+  </div>
+  
+  
+  
+  <!-- CONTENEDOR QUE RELLENA TODA LA PANTALLA (menos el topbar) -->
+  <div class="w-full max-w-md px-4" style="height: calc(100vh - 72px); margin-top: 280px;">
+    <h2 class="text-lg font-semibold text-gray-800 mb-1">Mis intereses</h2>
+    <div class="flex justify-between items-center mb-4">
+      <p class="text-sm text-gray-500">Selecciona tus intereses</p>
+      <button (click)="resetInterests()" class="text-[#5B9BBE] text-xl">
+        ⟳
+      </button>
+    </div>
+  
+    <div class="flex flex-wrap gap-2">
+      <button *ngFor="let interest of interests; let i = index" 
+              (click)="toggleInterest(i)" 
+              [ngClass]="{
+                'bg-[#5B9BBE] text-white border-[#5B9BBE]': selectedInterests.includes(i),
+                'bg-white text-[#5B9BBE] border-[#5B9BBE]': !selectedInterests.includes(i)
+              }" 
+              class="px-4 py-1 rounded-full border text-sm font-medium transition-all">
+        {{ interest }}
+      </button>
+    </div>
+  
+    <div class="absolute right-4">
+      <button (click)="enviarIntereses() "
+          class=" bg-[#4C8C64] hover:bg-[#3a6e4e] text-white font-semibold py-2 px-6 rounded-md flex items-center gap-2 disabled:opacity-50 disabled:cursor-not-allowed mt-4">
+          Continuar <i class="pi pi-arrow-right"></i>
+      </button>
+    </div>
+  
+  </div>
+</div>

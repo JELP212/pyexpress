@@ -1,0 +1,68 @@
+<!-- TOPBAR FIJA -->
+<div class="w-full bg-[#5B9BBe] py-4 flex items-center justify-center rounded-b-2xl shadow-md fixed top-0 left-0 z-10">
+    <h1 class="text-white text-xl font-bold tracking-wide">PYEXPRESS</h1>
+</div>
+
+<!-- CONTENEDOR QUE RELLENA TODA LA PANTALLA (menos el topbar) -->
+<div class="w-full" style="height: calc(100vh - 72px); margin-top: 72px;">
+
+    <!-- FORMULARIO que ocupa TODO el espacio -->
+    <div class="w-full h-full bg-white flex items-start justify-center px-4 pt-2">
+
+        <div class="w-full max-w-md">
+            <h2 class="text-lg font-semibold text-gray-800 mb-1">Formulario</h2>
+            <p class="text-sm text-gray-500 mb-6">Por favor responde a las siguientes preguntas, son confidenciales</p>
+            <div class="max-w-md mx-auto bg-white border border-blue-200 rounded-lg shadow-md p-6 text-center">
+                <!-- Número de Pregunta -->
+                <div class="flex items-center justify-start text-yellow-600 font-bold text-lg mb-2">
+                    <span class="text-2xl">{{ preguntaActualIndex + 1 }}</span><span class="text-sm ml-1">/ {{ preguntas.length }}</span>
+                </div>
+              
+                <!-- Pregunta -->
+                <p class="text-lg font-semibold text-gray-500 mb-1">
+                    {{ preguntaActual.texto }}
+                </p>
+              
+                <!-- Opciones -->
+                <div class="space-y-4">
+                    <button
+                      *ngFor="let opcion of preguntaActual.opciones"
+                      (click)="seleccionarOpcion(opcion)"
+                      [ngClass]="{
+                        'bg-yellow-400 text-white': opcionSeleccionada === opcion,
+                        'bg-gray-100 hover:bg-gray-200 text-gray-800': opcionSeleccionada !== opcion
+                      }"
+                      class="w-full py-2 px-4 rounded-lg shadow text-left transition-colors duration-200"
+                    >
+                      {{ opcion }}
+                    </button>
+                </div>
+              </div>              
+
+            <!-- Botón de inicio de sesión -->
+            <div class="mt-8 flex justify-between items-center">
+                <!-- Botón Regresar -->
+                <button
+                  (click)="regresar()"
+                  [disabled]="preguntaActualIndex === 0"
+                  class="border border-[#4C8C64] text-[#4C8C64] font-semibold py-2 px-6 rounded-md flex items-center gap-2 bg-white hover:bg-gray-100 disabled:opacity-50 disabled:cursor-not-allowed"
+                >
+                  <i class="pi pi-arrow-left"></i>
+                  Regresar
+                </button>
+              
+                <!-- Botón Continuar -->
+                <button
+                    (click)="continuar()"
+                    [disabled]="!opcionSeleccionada"
+                    class="bg-[#4C8C64] hover:bg-[#3a6e4e] text-white font-semibold py-2 px-6 rounded-md flex items-center gap-2 disabled:opacity-50 disabled:cursor-not-allowed"
+                    >
+                    {{ esUltimaPregunta() ? 'Finalizar' : 'Continuar' }}
+                    <i class="pi" [ngClass]="esUltimaPregunta() ? 'pi-check' : 'pi-arrow-right'"></i>
+                </button>
+            </div>              
+
+        </div>
+
+    </div>
+</div>

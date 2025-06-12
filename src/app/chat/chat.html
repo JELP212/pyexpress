@@ -1,0 +1,68 @@
+<!-- TOPBAR FIJA -->
+<router-outlet></router-outlet>
+<div class="w-full bg-[#5B9BBe] py-4 flex items-center justify-center rounded-b-2xl shadow-md fixed top-0 left-0 z-10">
+    <div class="fixed top-4 left-4 z-50">
+        <button (click)="toggleMenu()" class="text-white focus:outline-none">
+          <i class="pi pi-bars text-2xl"></i>
+        </button>
+    </div>
+    <div class="w-full flex justify-center">
+        <h1 class="text-white font-extrabold text-lg tracking-wide">PYEXPRESS</h1>
+    </div>
+</div>
+
+<!-- CONTENEDOR QUE RELLENA TODA LA PANTALLA (menos el topbar) -->
+<div class="w-full" style="height: calc(100vh - 72px); margin-top: 72px;">
+
+    <!-- FORMULARIO que ocupa TODO el espacio -->
+    <div class="w-full h-full bg-white flex items-start justify-center px-4 pt-2">
+
+        <div class="w-full max-w-md">
+            <h2 class="text-lg font-semibold text-gray-800 mb-1">Chat con IA</h2>
+            <p class="text-sm text-gray-500 mb-6">Cuéntanos, ¿Qué deseas hacer hoy?</p>
+
+            <!-- Tarjeta ExpoAsistente -->
+            <div *ngFor="let agente of agentes" class="bg-white shadow-md rounded-xl p-4 mb-4 flex items-center gap-4">
+              <i class="pi pi-sliders-h text-4xl text-[#5b9abd]"></i>
+              <div>
+                <h3 class="text-sm font-semibold text-gray-800">{{ agente.nombre }}</h3>
+                <p class="text-sm text-gray-600">{{ agente.descripcion }}</p>
+              </div>
+            </div>
+
+        </div>
+
+    </div>
+</div>
+
+<!-- Fondo translúcido -->
+<div
+  class="fixed top-0 left-0 w-full h-full bg-[#5b9abd]/60 backdrop-blur-sm z-30 transition-opacity duration-300"
+  *ngIf="menuOpen"
+  (click)="toggleMenu()"
+></div>
+<div
+  class="fixed top-0 left-0 h-full w-[260px] bg-[#5b9abd] text-white z-40 transform transition-transform duration-300 ease-in-out"
+  [ngClass]="{ '-translate-x-full': !menuOpen, 'translate-x-0': menuOpen }">
+  <!-- Logo -->
+  <div class="text-center font-extrabold text-white text-xl py-6">
+    PYEXPRESS
+  </div>
+
+  <!-- Opciones del menú -->
+  <ul class="px-4 space-y-3">
+    <li
+      *ngFor="let item of menuItems"
+      [routerLink]="item.routerLink"
+      (click)="selectMenuItem(item.label)"
+      class="flex items-center gap-3 px-4 py-3 rounded-xl cursor-pointer transition-all duration-200"
+      [ngClass]="{
+        'bg-white text-[#5b9abd] shadow-md': selectedItem === item.label,
+        'hover:bg-white hover:text-[#5b9abd]': selectedItem !== item.label
+      }"
+    >
+      <i [class]="item.icon + ' text-lg'"></i>
+      <span class="text-sm font-semibold">{{ item.label }}</span>
+    </li>
+  </ul>
+</div>

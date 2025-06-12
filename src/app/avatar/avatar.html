@@ -1,0 +1,111 @@
+<router-outlet></router-outlet>
+<div class="">
+  <div class="w-full bg-[#5B9BBe] py-8 px-6 flex flex-col rounded-b-2xl shadow-md fixed top-0 left-0 z-10">
+    <!-- Título centrado -->
+    <div class="fixed top-4 left-4 z-50">
+      <button (click)="toggleMenu()" class="text-white focus:outline-none">
+        <i class="pi pi-bars text-2xl"></i>
+      </button>
+    </div>
+    <div class="w-full flex justify-center">
+      <h1 class="text-white font-extrabold text-lg tracking-wide">PYEXPRESS</h1>
+    </div>
+
+    <div class="flex items-center justify-center mt-6 gap-4">
+      <!-- Avatar armado -->
+      <div class="relative w-[180px] h-[200px]">
+        <img *ngIf="cuerpoSeleccionado" [src]="cuerpoSeleccionado.imagen" alt="Cuerpo"
+          class="absolute top-[50%] left-[1%] w-[72%] h-[72%] z-10 object-contain" />
+        <img *ngIf="cabezaSeleccionada" [src]="cabezaSeleccionada.imagen" alt="Cabeza"
+          class="absolute top-[5%] left-[12%] w-[65%] h-[65%] z-20 object-contain" />
+        <img *ngIf="rostroSeleccionado" [src]="rostroSeleccionado.imagen" alt="Rostro"
+          class="absolute top-[20%] left-[28%] w-[45%] h-[45%] z-30 object-contain" />
+      </div>
+    
+      <!-- Botón guardar -->
+      <button 
+        class="bg-[#4C8C64] text-white px-4 py-2 rounded-lg shadow hover:bg-[#4a88a8] transition-all flex items-center gap-2">
+        <i class="pi pi-check"></i> Guardar
+      </button>
+    </div>
+    
+  </div>
+
+
+
+  <!-- CONTENEDOR QUE RELLENA TODA LA PANTALLA (menos el topbar) -->
+  <div class="w-full max-w-md px-4" style="height: calc(100vh - 72px); margin-top: 280px;">
+    <div class="space-y-6">
+
+      <!-- Sección de pestañas -->
+      <div class="flex space-x-4">
+        <button class="bg-blue-400 text-white px-4 py-1 rounded-full">Apariencia</button>
+        <button class="text-gray-500">Accesorios</button>
+      </div>
+
+      <!-- Sección de Cuerpo -->
+      <div>
+        <h2 class="text-gray-600 font-semibold mb-2">Cabeza</h2>
+        <div class="grid grid-cols-3 gap-2">
+          <div *ngFor="let articulo of articulosCabeza" (click)="seleccionarCabeza(articulo)" [ngClass]="{
+                    'border-blue-500': cabezaSeleccionada?.id === articulo.id,
+                    'border-gray-300': cabezaSeleccionada?.id !== articulo.id
+                  }" class="w-20 h-24 border-2 rounded overflow-hidden cursor-pointer transition-all">
+            <img [src]="articulo.imagen" class="w-full h-full object-cover" />
+          </div>
+        </div>
+      </div>
+
+      <div>
+        <h2 class="text-gray-600 font-semibold mb-2">Rostro</h2>
+        <div class="grid grid-cols-3 gap-2">
+          <div *ngFor="let articulo of articulosRostro" (click)="seleccionarRostro(articulo)" [ngClass]="{
+                    'border-blue-500': rostroSeleccionado?.id === articulo.id,
+                    'border-gray-300': rostroSeleccionado?.id !== articulo.id
+                  }" class="w-20 h-24 border-2 rounded overflow-hidden cursor-pointer transition-all">
+            <img [src]="articulo.imagen" class="w-full h-full object-cover" />
+          </div>
+        </div>
+      </div>
+
+      <div>
+        <h2 class="text-gray-600 font-semibold mb-2">Cuerpo</h2>
+        <div class="grid grid-cols-3 gap-2">
+          <div *ngFor="let articulo of articulosCuerpo" (click)="seleccionarCuerpo(articulo)" [ngClass]="{
+                    'border-blue-500': cuerpoSeleccionado?.id === articulo.id,
+                    'border-gray-300': cuerpoSeleccionado?.id !== articulo.id
+                  }" class="w-20 h-24 border-2 rounded overflow-hidden cursor-pointer transition-all">
+            <img [src]="articulo.imagen" class="w-full h-full object-cover" />
+          </div>
+        </div>
+      </div>
+
+    </div>
+
+  </div>
+
+</div>
+
+<!-- Fondo translúcido -->
+<div class="fixed top-0 left-0 w-full h-full bg-[#5b9abd]/60 backdrop-blur-sm z-30 transition-opacity duration-300"
+  *ngIf="menuOpen" (click)="toggleMenu()"></div>
+<div
+  class="fixed top-0 left-0 h-full w-[260px] bg-[#5b9abd] text-white z-40 transform transition-transform duration-300 ease-in-out"
+  [ngClass]="{ '-translate-x-full': !menuOpen, 'translate-x-0': menuOpen }">
+  <!-- Logo -->
+  <div class="text-center font-extrabold text-white text-xl py-6">
+    PYEXPRESS
+  </div>
+
+  <!-- Opciones del menú -->
+  <ul class="px-4 space-y-3">
+    <li *ngFor="let item of menuItems" [routerLink]="item.routerLink" (click)="selectMenuItem(item.label)"
+      class="flex items-center gap-3 px-4 py-3 rounded-xl cursor-pointer transition-all duration-200" [ngClass]="{
+        'bg-white text-[#5b9abd] shadow-md': selectedItem === item.label,
+        'hover:bg-white hover:text-[#5b9abd]': selectedItem !== item.label
+      }">
+      <i [class]="item.icon + ' text-lg'"></i>
+      <span class="text-sm font-semibold">{{ item.label }}</span>
+    </li>
+  </ul>
+</div>
