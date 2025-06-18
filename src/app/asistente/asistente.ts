@@ -105,7 +105,6 @@ export class Asistente {
   
     const headers = {
       'Content-Type': 'application/json',
-      'Authorization': 'Bearer sk-' // ⚠️ Solo para desarrollo
     };
   
     const body = {
