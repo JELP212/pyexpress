@@ -1,15 +1,18 @@
 import { Injectable } from '@angular/core';
-import { Firestore, collection, addDoc, getDocs, CollectionReference, DocumentData } from '@angular/fire/firestore';
+import { Firestore, collection, addDoc, getDocs, CollectionReference, DocumentData,query, where,getDoc,DocumentReference, doc, updateDoc,setDoc,docData } from '@angular/fire/firestore';
 import { collectionData } from 'rxfire/firestore';
 import { Observable } from 'rxjs';
+import { switchMap, from } from 'rxjs';
+import { mergeMap } from 'rxjs/operators';
 export interface Usuario {
-  id?: string;
+  UsuarioId?: string;
   nombres: string;
   apellidos: string;
   correo: string;
   password: string;
   edad: number;
   carreraId: string;
+  puntos: number;
 }
 
 @Injectable({
@@ -33,7 +36,7 @@ export class Firebase {
     return addDoc(userRef, usuario);
   }
 
-  async login(correo: string, password: string): Promise<Usuario | null> {
+  async login(correo: string, password: string): Promise<Partial<Usuario> | null> {
     try {
       const snapshot = await getDocs(this.usuarioCollection);
   
@@ -41,15 +44,24 @@ export class Firebase {
         const data = doc.data() as Usuario;
         return { id: doc.id, ...data };
       });
+  
       console.log('Usuarios obtenidos:', usuarios);
+  
       const usuario = usuarios.find(u => u.correo === correo && u.password === password);
-      return usuario || null;
+  
+      if (usuario) {
+        const { nombres, apellidos, id: UsuarioId, puntos } = usuario;
+        return { nombres, apellidos, UsuarioId, puntos };
+      }
+  
+      return null;
   
     } catch (error) {
       console.error('Error al intentar hacer login:', error);
       return null;
     }
   }
+  
 
   guardarFormulario(usuarioId: string, respuestas: string[]): Promise<any> {
     const formularioRef = collection(this.firestore, 'Formulario');
@@ -86,4 +98,127 @@ export class Firebase {
     return collectionData(ref, { idField: 'id' }) as Observable<any[]>;
   }
   
+  getInteresesPorUsuario(usuarioId: string): Promise<string[]> {
+    const interesesRef = collection(this.firestore, 'InteresUsuario');
+    const q = query(interesesRef, where('usuarioId', '==', usuarioId));
+  
+    return getDocs(q).then(snapshot => {
+      const intereses: string[] = [];
+      snapshot.forEach(doc => {
+        const data = doc.data();
+        if (data['intereses'] && Array.isArray(data['intereses'])) {
+          intereses.push(...data['intereses']);
+        }
+      });
+      return intereses;
+    });
+  }
+
+  guardarAvatarUsuario(avatarData: any): Promise<void> {
+    const avatarRef = collection(this.firestore, 'AvatarUsuario');
+    const q = query(avatarRef, where('usuarioId', '==', avatarData.usuarioId));
+  
+    return getDocs(q).then(snapshot => {
+      if (!snapshot.empty) {
+        // Ya existe => actualiza el documento
+        const docId = snapshot.docs[0].id;
+        const docRef = doc(this.firestore, 'AvatarUsuario', docId);
+        return updateDoc(docRef, { avatar: avatarData.avatar });
+      } else {
+        // No existe => crea uno nuevo
+        const newDocRef = doc(avatarRef);
+        return setDoc(newDocRef, avatarData);
+      }
+    });
+  }
+  
+
+  getAvatarUsuario(usuarioId: string): Observable<any[]> {
+    const avatarRef = collection(this.firestore, 'AvatarUsuario');
+    const q = query(avatarRef, where('usuarioId', '==', usuarioId));
+    return collectionData(q, { idField: 'id' });
+  }
+
+  getArticulosConCategorias(): Observable<any[]> {
+    const articuloRef = collection(this.firestore, 'Articulo');
+  
+    return collectionData(articuloRef, { idField: 'id' }).pipe(
+      mergeMap((articulos: any[]) => {
+        const articulosConCategorias$ = articulos.map(async (articulo) => {
+          // Aseguramos que el idCategoria sea de tipo DocumentReference
+          const categoriaSnap = await getDoc(articulo.idCategoria as DocumentReference);
+  
+          const categoriaData = categoriaSnap.data() as { nombre: string };
+          const nombreCategoria = categoriaSnap.exists() ? categoriaData.nombre : 'Sin categoría';
+  
+          return {
+            ...articulo,
+            nombreCategoria
+          };
+        });
+  
+        return from(Promise.all(articulosConCategorias$));
+      })
+    );
+  }
+  
+  obtenerUsuario(usuarioId: string): Observable<any> {
+    const ref = doc(this.firestore, 'Usuarios', usuarioId);
+    return docData(ref, { idField: 'id' });
+  }
+
+  registrarCompra(compra: any): Promise<void> {
+    const ref = doc(collection(this.firestore, 'ArticulosUsuario'));
+    return setDoc(ref, compra);
+  }
+
+  actualizarPuntosUsuario(usuarioId: string, nuevosPuntos: number): Promise<void> {
+    const ref = doc(this.firestore, 'Usuarios', usuarioId);
+    return updateDoc(ref, { puntos: nuevosPuntos });
+  }
+
+  verificarCompra(usuarioId: string, nombre: string): Promise<boolean> {
+    const ref = collection(this.firestore, 'ArticulosUsuario');
+    const q = query(ref, where('usuarioId', '==', usuarioId), where('nombre', '==', nombre));
+    return getDocs(q).then(snapshot => !snapshot.empty);
+  }
+
+  getArticulosUsuario(usuarioId: string) {
+    const ref = collection(this.firestore, 'ArticulosUsuario');
+    const q = query(ref, where('usuarioId', '==', usuarioId));
+    return collectionData(q, { idField: 'id' });
+  }
+  
+  getArticulosCompradosConCategoria(usuarioId: string): Observable<any[]> {
+    const ref = collection(this.firestore, 'ArticulosUsuario');
+    const q = query(ref, where('usuarioId', '==', usuarioId));
+  
+    return from(
+      getDocs(q).then(async snapshot => {
+        const articulos = [];
+  
+        for (const doc of snapshot.docs) {
+          const data = doc.data();
+  
+          // Obtener la categoría por referencia
+          let nombreCategoria = 'Sin categoría';
+          if (data['categoria']) {
+            const categoriaSnap = await getDoc(data['categoria'] as DocumentReference);
+            if (categoriaSnap.exists()) {
+              const catData = categoriaSnap.data() as any;
+              nombreCategoria = catData.nombre || 'Sin categoría';
+            }
+          }
+  
+          articulos.push({
+            ...data,
+            id: doc.id,
+            nombreCategoria
+          });
+        }
+  
+        return articulos;
+      })
+    );
+  }
 }

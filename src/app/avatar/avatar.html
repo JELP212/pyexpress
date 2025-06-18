@@ -10,7 +10,7 @@
     <div class="w-full flex justify-center">
       <h1 class="text-white font-extrabold text-lg tracking-wide">PYEXPRESS</h1>
     </div>
-
+ 
     <div class="flex items-center justify-center mt-6 gap-4">
       <!-- Avatar armado -->
       <div class="relative w-[180px] h-[200px]">
@@ -20,10 +20,17 @@
           class="absolute top-[5%] left-[12%] w-[65%] h-[65%] z-20 object-contain" />
         <img *ngIf="rostroSeleccionado" [src]="rostroSeleccionado.imagen" alt="Rostro"
           class="absolute top-[20%] left-[28%] w-[45%] h-[45%] z-30 object-contain" />
+
+          <ng-container *ngFor="let accesorio of accesoriosSeleccionados">
+            <img [src]="accesorio.imagen"
+                 [alt]="accesorio.nombre"
+                 class="absolute object-contain"
+                 [ngStyle]="getEstilosAccesorio(accesorio)" />
+          </ng-container>
       </div>
     
       <!-- Botón guardar -->
-      <button 
+      <button (click)="guardarAvatar()"
         class="bg-[#4C8C64] text-white px-4 py-2 rounded-lg shadow hover:bg-[#4a88a8] transition-all flex items-center gap-2">
         <i class="pi pi-check"></i> Guardar
       </button>
@@ -34,52 +41,80 @@
 
 
   <!-- CONTENEDOR QUE RELLENA TODA LA PANTALLA (menos el topbar) -->
-  <div class="w-full max-w-md px-4" style="height: calc(100vh - 72px); margin-top: 280px;">
+  <div class="w-full max-w-md px-4" style="height: calc(100vh - 72px); margin-top: 330px;">
     <div class="space-y-6">
 
       <!-- Sección de pestañas -->
-      <div class="flex space-x-4">
-        <button class="bg-blue-400 text-white px-4 py-1 rounded-full">Apariencia</button>
-        <button class="text-gray-500">Accesorios</button>
+      <div class="flex space-x-4 mb-4">
+        <button 
+          (click)="vistaActual = 'apariencia'" 
+          [ngClass]="vistaActual === 'apariencia' ? 'bg-blue-400 text-white' : 'text-gray-500'"
+          class="px-4 py-1 rounded-full">
+          Apariencia
+        </button>
+      
+        <button 
+          (click)="vistaActual = 'accesorios'" 
+          [ngClass]="vistaActual === 'accesorios' ? 'bg-blue-400 text-white' : 'text-gray-500'"
+          class="px-4 py-1 rounded-full">
+          Accesorios
+        </button>
       </div>
+      
+      <div *ngIf="vistaActual === 'apariencia'">
+        <!-- Sección de Cuerpo -->
+        <div>
+          <h2 class="text-gray-600 font-semibold mb-2">Cabeza</h2>
+          <div class="grid grid-cols-3 gap-2">
+            <div *ngFor="let articulo of articulosCabeza" (click)="seleccionarCabeza(articulo)" [ngClass]="{
+                      'border-blue-500': cabezaSeleccionada?.id === articulo.id,
+                      'border-gray-300': cabezaSeleccionada?.id !== articulo.id
+                    }" class="w-20 h-24 border-2 rounded overflow-hidden cursor-pointer transition-all">
+              <img [src]="articulo.imagen" class="w-full h-full object-cover" />
+            </div>
+          </div>
+        </div>
 
-      <!-- Sección de Cuerpo -->
-      <div>
-        <h2 class="text-gray-600 font-semibold mb-2">Cabeza</h2>
-        <div class="grid grid-cols-3 gap-2">
-          <div *ngFor="let articulo of articulosCabeza" (click)="seleccionarCabeza(articulo)" [ngClass]="{
-                    'border-blue-500': cabezaSeleccionada?.id === articulo.id,
-                    'border-gray-300': cabezaSeleccionada?.id !== articulo.id
-                  }" class="w-20 h-24 border-2 rounded overflow-hidden cursor-pointer transition-all">
-            <img [src]="articulo.imagen" class="w-full h-full object-cover" />
+        <div>
+          <h2 class="text-gray-600 font-semibold mb-2">Rostro</h2>
+          <div class="grid grid-cols-3 gap-2">
+            <div *ngFor="let articulo of articulosRostro" (click)="seleccionarRostro(articulo)" [ngClass]="{
+                      'border-blue-500': rostroSeleccionado?.id === articulo.id,
+                      'border-gray-300': rostroSeleccionado?.id !== articulo.id
+                    }" class="w-20 h-24 border-2 rounded overflow-hidden cursor-pointer transition-all">
+              <img [src]="articulo.imagen" class="w-full h-full object-cover" />
+            </div>
+          </div>
+        </div>
+
+        <div>
+          <h2 class="text-gray-600 font-semibold mb-2">Cuerpo</h2>
+          <div class="grid grid-cols-3 gap-2">
+            <div *ngFor="let articulo of articulosCuerpo" (click)="seleccionarCuerpo(articulo)" [ngClass]="{
+                      'border-blue-500': cuerpoSeleccionado?.id === articulo.id,
+                      'border-gray-300': cuerpoSeleccionado?.id !== articulo.id
+                    }" class="w-20 h-24 border-2 rounded overflow-hidden cursor-pointer transition-all">
+              <img [src]="articulo.imagen" class="w-full h-full object-cover" />
+            </div>
           </div>
         </div>
       </div>
-
-      <div>
-        <h2 class="text-gray-600 font-semibold mb-2">Rostro</h2>
-        <div class="grid grid-cols-3 gap-2">
-          <div *ngFor="let articulo of articulosRostro" (click)="seleccionarRostro(articulo)" [ngClass]="{
-                    'border-blue-500': rostroSeleccionado?.id === articulo.id,
-                    'border-gray-300': rostroSeleccionado?.id !== articulo.id
-                  }" class="w-20 h-24 border-2 rounded overflow-hidden cursor-pointer transition-all">
-            <img [src]="articulo.imagen" class="w-full h-full object-cover" />
+      
+      <div *ngIf="vistaActual === 'accesorios'">
+        <div *ngFor="let categoria of objectKeys(articulosAgrupadosPorCategoria)">
+          <h2 class="text-gray-700 font-bold text-lg mt-4 mb-2">{{ categoria }}</h2>
+          
+          <div class="grid grid-cols-4 gap-2"> <!-- más columnas y menos espacio -->
+            <div *ngFor="let accesorio of articulosAgrupadosPorCategoria[categoria]"
+                (click)="seleccionarAccesorio(accesorio)"
+                
+                 class="w-16 h-20 border border-gray-300 rounded overflow-hidden flex flex-col items-center justify-center">
+              <img [src]="accesorio.imagen" class="w-12 h-12 object-contain" />
+            </div>
           </div>
         </div>
       </div>
-
-      <div>
-        <h2 class="text-gray-600 font-semibold mb-2">Cuerpo</h2>
-        <div class="grid grid-cols-3 gap-2">
-          <div *ngFor="let articulo of articulosCuerpo" (click)="seleccionarCuerpo(articulo)" [ngClass]="{
-                    'border-blue-500': cuerpoSeleccionado?.id === articulo.id,
-                    'border-gray-300': cuerpoSeleccionado?.id !== articulo.id
-                  }" class="w-20 h-24 border-2 rounded overflow-hidden cursor-pointer transition-all">
-            <img [src]="articulo.imagen" class="w-full h-full object-cover" />
-          </div>
-        </div>
-      </div>
-
+      
     </div>
 
   </div>

@@ -5,6 +5,7 @@ import { FormsModule } from '@angular/forms';
 import { InputTextModule } from 'primeng/inputtext';
 import { ButtonModule } from 'primeng/button';
 import { Firebase } from '../services/firebase';
+import { CookieService } from 'ngx-cookie-service';
 
 @Component({
   selector: 'app-intereses',
@@ -18,7 +19,7 @@ import { Firebase } from '../services/firebase';
   styleUrl: './intereses.css'
 })
 export class Intereses {
-  constructor(private router: Router,private firebaseService: Firebase) {}
+  constructor(private router: Router,private firebaseService: Firebase, private cookieService: CookieService) {}
   
   interests: string[] = [];
   nombresUsuario: string = '';
@@ -71,7 +72,7 @@ export class Intereses {
   }
 
   enviarIntereses(): void {
-    const usuarioId = localStorage.getItem('usuarioId');
+    const usuarioId = this.cookieService.get('usuarioId');
     if (!usuarioId) {
       alert('No se encontró el ID del usuario.');
       return;

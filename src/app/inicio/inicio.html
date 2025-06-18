@@ -15,17 +15,23 @@
         <!-- Usuario -->
         <div class="flex items-center justify-between mt-6">
             <div>
-                <h2 class="text-[#1e1b4b] font-extrabold text-lg leading-5">{{ nombreUsuario }}</h2>
-                <p class="text-[#1e1b4b] text-sm mt-[2px]">{{ apellidoUsuario }}</p>
-                <p class="text-white font-bold text-sm mt-2">25 puntos</p>
-                <button class="border border-white text-white px-4 py-1 rounded-full text-sm hover:bg-white hover:text-[#1e1b4b] transition mt-2">
-                    Videojuegos
-                </button>
-                <button class="border border-white text-white px-4 py-1 rounded-full text-sm hover:bg-white hover:text-[#1e1b4b] transition mt-1">
-                    Crear historietas
+                <h2 class="text-[#1e1b4b] font-extrabold text-lg leading-5">{{ nombresUsuario }}</h2>
+                <p class="text-[#1e1b4b] text-sm mt-[2px]">{{ apellidosUsuario }}</p>
+                <p class="text-white font-bold text-sm mt-2">{{ puntosUsuario }} puntos</p>
+                <button 
+                  *ngFor="let interes of interesesUsuario" 
+                  class="border border-white text-white px-4 py-1 rounded-full text-sm hover:bg-white hover:text-[#1e1b4b] transition mt-2 mr-2"
+                >
+                  {{ interes }}
                 </button>
             </div>
-            <img src="avatar.png" alt="avatar" class="w-45 h-45 object-contain -mb-8" />
+            <div class="relative w-[180px] h-[150px]">
+              <img *ngFor="let parte of avatarPartes"
+                   [src]="parte.imagen"
+                   [alt]="parte.categoria"
+                   class="absolute object-contain"
+                   [ngStyle]="getEstiloPorCategoria(parte.categoria)">
+            </div>
         </div>
     </div>
 
@@ -38,7 +44,7 @@
           <!-- Título superior -->
           <div class="flex justify-between items-center">
             <h2 class="text-lg font-semibold">¿Creamos algo nuevo?</h2>
-            <a href="#" class="text-blue-500 text-sm font-medium">Ver más</a>
+            <a href="/diagrama" class="text-blue-500 text-sm font-medium">Ver más</a>
           </div>
       
           <!-- Tarjeta de creación de historieta -->
@@ -62,7 +68,7 @@
           <div class="space-y-3">
             <div class="flex justify-between items-center">
               <h2 class="text-lg font-semibold">Nuevos artículos en tienda</h2>
-              <a href="#" class="text-blue-500 text-sm font-medium">Ver más</a>
+              <a href="/tienda" class="text-blue-500 text-sm font-medium">Ver más</a>
             </div>
             <div class="flex space-x-3 overflow-x-auto">
               <div class="relative bg-gray-100 rounded-xl p-4 w-32 h-24 flex items-center justify-center">
@@ -90,11 +96,11 @@
           <div class="space-y-2">
             <h2 class="text-lg font-semibold">Crea algo nuevo</h2>
             <div class="grid grid-cols-2 gap-4">
-              <button class="bg-[#a6d3e6] p-4 rounded-xl flex flex-col items-center justify-center shadow">
+              <button (click)="irADiagrama()" class="bg-[#a6d3e6] p-4 rounded-xl flex flex-col items-center justify-center shadow">
                 <img src="diagrma.jpg" alt="Diagramas" class="w-20 h-22 mb-2">
                 <span class="text-sm font-medium text-gray-800 text-center">Diagramas y historietas</span>
               </button>
-              <button class="bg-[#a8d4b9] p-4 rounded-xl flex flex-col items-center justify-center shadow">
+              <button (click)="irChat()" class="bg-[#a8d4b9] p-4 rounded-xl flex flex-col items-center justify-center shadow">
                 <img src="chat.jpg" alt="Chat con IA" class="w-20 h-22 mb-2">
                 <span class="text-sm font-medium text-gray-800 text-center">Chat con IA</span>
               </button>

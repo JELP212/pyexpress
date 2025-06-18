@@ -22,7 +22,7 @@
             <p class="text-sm text-gray-500 mb-6">Cuéntanos, ¿Qué deseas hacer hoy?</p>
 
             <!-- Tarjeta ExpoAsistente -->
-            <div *ngFor="let agente of agentes" class="bg-white shadow-md rounded-xl p-4 mb-4 flex items-center gap-4">
+            <div *ngFor="let agente of agentes" class="bg-white shadow-md rounded-xl p-4 mb-4 flex items-center gap-4" (click)="seleccionarAgente(agente)">
               <i class="pi pi-sliders-h text-4xl text-[#5b9abd]"></i>
               <div>
                 <h3 class="text-sm font-semibold text-gray-800">{{ agente.nombre }}</h3>
