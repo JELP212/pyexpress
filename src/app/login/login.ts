@@ -36,8 +36,10 @@ export class Login {
     this.firebaseService.login(correo, password).then(usuario => {
       if (usuario) {
         // Guardar usuario en localStorage o hacer lo que necesites
-        document.cookie = `nombre=${usuario.nombres}; path=/`;
-        document.cookie = `apellido=${usuario.apellidos}; path=/`;
+        document.cookie = `nombres=${usuario.nombres}; path=/`;
+        document.cookie = `apellidos=${usuario.apellidos}; path=/`;
+        document.cookie = `usuarioId=${usuario.UsuarioId}; path=/`;
+        document.cookie = `puntos=${usuario.puntos}; path=/`;
         this.router.navigate(['/inicio']);
       } else {
         alert('Credenciales inválidas');

@@ -8,6 +8,7 @@ import { SidebarModule } from 'primeng/sidebar'
 import { MenuModule } from 'primeng/menu';
 import { Firebase } from '../services/firebase';
 import { RouterModule } from '@angular/router';
+import { CookieService } from 'ngx-cookie-service';
 
 @Component({
   selector: 'app-avatar',
@@ -25,7 +26,7 @@ import { RouterModule } from '@angular/router';
 })
 export class Avatar {
 
-  constructor(private router: Router,private firebaseService: Firebase) {}
+  constructor(private router: Router,private firebaseService: Firebase,private cookieService: CookieService,) {}
   menuOpen = false;
   selectedItem = 'Inicio'
   articulosCabeza: any[] = [];
@@ -39,9 +40,33 @@ export class Avatar {
   rostroSeleccionado: any = null;
   cuerpoSeleccionado: any = null;
 
+  avatarPartes: any[] = [];
+
+  vistaActual: 'apariencia' | 'accesorios' = 'apariencia';
+  articulosAgrupadosPorCategoria: { [key: string]: any[] } = {};
+  objectKeys = Object.keys;
+
+  accesoriosSeleccionados: any[] = [];
+
   ngOnInit(): void {
+    const usuarioId = this.cookieService.get('usuarioId');
+    if (usuarioId) {
+      this.firebaseService.getAvatarUsuario(usuarioId).subscribe((data) => {
+        if (data.length > 0 && data[0]['avatar']) {
+          const avatar = data[0]['avatar'];
+  
+          // Guardar partes
+          this.avatarPartes = avatar;
+  
+          // Asignar seleccionados por categoría
+          this.cabezaSeleccionada = avatar.find((p: any) => p.categoria === 'cabeza');
+          this.rostroSeleccionado = avatar.find((p: any) => p.categoria === 'rostro');
+          this.cuerpoSeleccionado = avatar.find((p: any) => p.categoria === 'cuerpo');
+        }
+        
+      });
+    }
     this.firebaseService.getArticulosApariencia().subscribe(data => {
-      // Filtramos solo los artículos cuya categoría sea "Cuerpo"
       this.articulosCabeza = data.filter(a => a.categoria === 'head');
       this.articulosRostro = data.filter(a => a.categoria === 'face');
       this.articulosCuerpo = data.filter(a => a.categoria === 'body');
@@ -51,6 +76,17 @@ export class Avatar {
     if (matchedItem) {
       this.selectedItem = matchedItem.label;
     }
+    this.firebaseService.getArticulosCompradosConCategoria(usuarioId).subscribe((articulos: any[]) => {
+      this.articulosAgrupadosPorCategoria = {};
+    
+      for (const articulo of articulos) {
+        const categoria = articulo.nombreCategoria || 'Sin categoría';
+        if (!this.articulosAgrupadosPorCategoria[categoria]) {
+          this.articulosAgrupadosPorCategoria[categoria] = [];
+        }
+        this.articulosAgrupadosPorCategoria[categoria].push(articulo);
+      }
+    });
   }
 
   menuItems = [
@@ -64,7 +100,7 @@ export class Avatar {
   ];
   
   logout() {
-    localStorage.clear(); // o lo que uses para manejar sesión
+    localStorage.clear();
     this.router.navigate(['/login']);
   }
 
@@ -89,6 +125,93 @@ export class Avatar {
     this.cuerpoSeleccionado = articulo;
   }
 
+  guardarAvatar(): void {
+    const usuarioId = this.cookieService.get('usuarioId');
+    if (!usuarioId) {
+      alert('Usuario no identificado.');
+      return;
+    }
   
+    const avatar = [];
+  
+    if (this.cuerpoSeleccionado) {
+      avatar.push({ categoria: 'cuerpo', imagen: this.cuerpoSeleccionado.imagen });
+    }
+    if (this.cabezaSeleccionada) {
+      avatar.push({ categoria: 'cabeza', imagen: this.cabezaSeleccionada.imagen });
+    }
+    if (this.rostroSeleccionado) {
+      avatar.push({ categoria: 'rostro', imagen: this.rostroSeleccionado.imagen });
+    }
+  
+    // ✅ Agregamos los accesorios seleccionados
+    this.accesoriosSeleccionados.forEach(accesorio => {
+      avatar.push({
+        categoria: accesorio.nombreCategoria,
+        imagen: accesorio.imagen
+      });
+    });
+  
+    const avatarData = {
+      usuarioId: usuarioId,
+      avatar: avatar
+    };
+  
+    this.firebaseService.guardarAvatarUsuario(avatarData)
+      .then(() => {
+        alert('Avatar guardado correctamente.');
+        this.router.navigate(['/inicio']);
+      })
+      .catch((error) => {
+        console.error('Error al guardar el avatar:', error);
+      });
+  }
+  
+
+  getCookie(nombre: string): string | null {
+    const cookies = document.cookie.split(';');
+    for (const cookie of cookies) {
+      const [clave, valor] = cookie.trim().split('=');
+      if (clave === nombre) {
+        return decodeURIComponent(valor);
+      }
+    }
+    return null;
+  }
+  
+  getImagen(categoria: string): string | null {
+    const parte = this.avatarPartes.find(p => p.categoria === categoria);
+    return parte ? parte.imagen : null;
+  }
+
+  seleccionarAccesorio(accesorio: any): void {
+    const categoria = accesorio.nombreCategoria;
+  
+    // Reemplaza el accesorio anterior de la misma categoría
+    const index = this.accesoriosSeleccionados.findIndex(
+      (a) => a.nombreCategoria === categoria
+    );
+  
+    if (index !== -1) {
+      // Ya hay uno, reemplázalo
+      this.accesoriosSeleccionados[index] = accesorio;
+    } else {
+      // No hay ninguno, agrégalo
+      this.accesoriosSeleccionados.push(accesorio);
+    }
+  }
+
+  getEstilosAccesorio(accesorio: any): any {
+    const posicionesPorCategoria: Record<string, any> = {
+      'Sombreros y gorras': { position: 'absolute', top: '-15px', left: '35%', width: '40px', height: '40px', 'z-index': 50 },
+      'Lentes': { position: 'absolute', top: '27%', left: '23%', width: '80px', height: '50px', 'z-index': 60 },
+      'Collares': { position: 'absolute', top: '65%', left: '45%', width: '30px', height: '30px', 'z-index': 70 },
+      // Agrega más si tienes
+    };
+  
+    return posicionesPorCategoria[accesorio.nombreCategoria] || {
+      position: 'absolute', top: '50%', left: '50%', width: '30px', height: '30px', 'z-index': 40
+    };
+  }
   
 }

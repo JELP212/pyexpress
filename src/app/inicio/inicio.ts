@@ -7,6 +7,8 @@ import { ButtonModule } from 'primeng/button';
 import { SidebarModule } from 'primeng/sidebar'
 import { MenuModule } from 'primeng/menu';
 import { RouterModule } from '@angular/router';
+import { Firebase } from '../services/firebase';
+import { CookieService } from 'ngx-cookie-service';
 
 @Component({
   selector: 'app-inicio',
@@ -24,32 +26,61 @@ import { RouterModule } from '@angular/router';
 })
 export class Inicio implements OnInit {
 
-  constructor(private router: Router) {}
-  nombreUsuario: string = '';
-  apellidoUsuario: string = '';
+  constructor(private router: Router,private firebaseService: Firebase, private cookieService: CookieService) {}
+  nombresUsuario: string = '';
+  apellidosUsuario: string = '';
   menuOpen = false;
+  puntosUsuario: string = '';
+  interesesUsuario: string[] = [];
+  avatarPartes: any[] = [];
 
   selectedItem = 'Inicio' 
   ngOnInit(): void {
-    const nombreCookie = document.cookie
+    const nombresCookie = document.cookie
       .split('; ')
-      .find(row => row.startsWith('nombre='));
+      .find(row => row.startsWith('nombres='));
   
-    const apellidoCookie = document.cookie
+    const apellidosCookie = document.cookie
       .split('; ')
-      .find(row => row.startsWith('apellido='));
+      .find(row => row.startsWith('apellidos='));
   
-    if (nombreCookie) {
-      this.nombreUsuario = decodeURIComponent(nombreCookie.split('=')[1]);
+    const puntosCookie = document.cookie
+      .split('; ')
+      .find(row => row.startsWith('puntos='));
+  
+    if (nombresCookie) {
+      this.nombresUsuario = decodeURIComponent(nombresCookie.split('=')[1]);
     }
   
-    if (apellidoCookie) {
-      this.apellidoUsuario = decodeURIComponent(apellidoCookie.split('=')[1]);
+    if (apellidosCookie) {
+      this.apellidosUsuario = decodeURIComponent(apellidosCookie.split('=')[1]);
+    }
+    if (puntosCookie) {
+      this.puntosUsuario = decodeURIComponent(puntosCookie.split('=')[1]);
     }
     const partes = this.router.url.split('/');
     const matchedItem = this.menuItems.find(item => item.routerLink === '/' + partes[partes.length - 1]);
     if (matchedItem) {
       this.selectedItem = matchedItem.label;
+    }
+
+    const usuarioId = this.cookieService.get('usuarioId');
+    if (usuarioId) {
+      this.firebaseService.getInteresesPorUsuario(usuarioId)
+        .then(intereses => {
+          this.interesesUsuario = intereses;
+        })
+        .catch(error => {
+          console.error('Error al obtener intereses:', error);
+        });
+    }
+    if (usuarioId) {
+      this.firebaseService.getAvatarUsuario(usuarioId).subscribe((data) => {
+        if (data.length > 0 && data[0]['avatar']) {
+          this.avatarPartes = data[0]['avatar'];
+          console.log('Avatar partes:', this.avatarPartes);
+        }
+      });
     }
   }
   
@@ -77,4 +108,29 @@ export class Inicio implements OnInit {
     this.menuOpen = false;
   }
 
+  irADiagrama(): void {
+    this.router.navigate(['/diagrama']);
+  }
+
+  irChat(): void {
+    this.router.navigate(['/chat']);
+  }
+
+  getEstiloPorCategoria(categoria: string): any {
+    switch (categoria) {
+      case 'cuerpo':
+        return { top: '45%', left: '1%', width: '72%', height: '72%', zIndex: 10 };
+      case 'cabeza':
+        return { top: '5%', left: '12%', width: '65%', height: '65%', zIndex: 20 };
+      case 'rostro':
+        return { top: '20%', left: '28%', width: '45%', height: '45%', zIndex: 30 };
+      case 'Sombreros y gorras':
+        return { top: '20%', left: '28%', width: '45%', height: '45%', zIndex: 30 };
+      case 'Lentes':
+        return { top: '17%', left: '24%', width: '45%', height: '45%', zIndex: 30 };
+      default:
+        return {};
+    }
+  }
+  
 }

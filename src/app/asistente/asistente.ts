@@ -56,6 +56,7 @@ export class Asistente {
   
   menuOpen = false;
   selectedItem = 'Inicio'
+  mensajes: { tipo: 'usuario' | 'chatgpt'; texto: string }[] = [];
   mensaje: string = '';
   recognition: any;
   
@@ -87,6 +88,58 @@ export class Asistente {
     if (this.recognition) {
       this.recognition.start();
     }
+  }
+  
+  async enviarMensaje() {
+    const textoUsuario = this.mensaje.trim();
+    if (!textoUsuario) return;
+  
+    this.mensajes.push({ tipo: 'usuario', texto: textoUsuario });
+    this.mensaje = '';
+  
+    // Leer la descripción desde localStorage
+    const descripcionAgente = localStorage.getItem('descripcionAgente') || 'un asistente especializado';
+  
+    // Crear mensaje inicial con contexto
+    const mensajeConContexto = `Te comunicarás con una persona que tiene TDA, entonces ayúdalo. Eres ${descripcionAgente}. ${textoUsuario}`;
+  
+    const headers = {
+      'Content-Type': 'application/json',
+      'Authorization': 'Bearer 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' // ⚠️ Solo para desarrollo
+    };
+  
+    const body = {
+      model: "gpt-4",
+      messages: [
+        { role: "system", content: "Eres un asistente amigable." },
+        { role: "user", content: mensajeConContexto }
+      ]
+    };
+  
+    try {
+      const res = await fetch('https://api.openai.com/v1/chat/completions', {
+        method: 'POST',
+        headers,
+        body: JSON.stringify(body)
+      });
+  
+      const data = await res.json();
+      const respuesta = data.choices[0]?.message?.content || 'Sin respuesta';
+  
+      this.mensajes.push({ tipo: 'chatgpt', texto: respuesta });
+    } catch (err) {
+      console.error(err);
+      this.mensajes.push({ tipo: 'chatgpt', texto: 'Error al contactar a OpenAI.' });
+    }
+  }
+
+  hablar(texto: string) {
+    const speech = new SpeechSynthesisUtterance();
+    speech.text = texto;
+    speech.lang = 'es-PE'; // Puedes usar 'es-ES' si deseas español neutro
+    speech.pitch = 1;
+    speech.rate = 1;
+    window.speechSynthesis.speak(speech);
   }
   
 }

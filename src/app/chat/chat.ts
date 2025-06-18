@@ -31,6 +31,9 @@ export class Chat {
   selectedItem = 'Inicio'
   agentes: any[] = [];
   
+  agenteSeleccionadoDescripcion: string = '';
+
+
   ngOnInit(): void {
     this.firebaseService.getAgentes().subscribe(data => {
       this.agentes = data;
@@ -64,6 +67,16 @@ export class Chat {
   selectMenuItem(label: string) {
     this.selectedItem = label;
     this.menuOpen = false;
+  }
+
+  seleccionarAgente(agente: any) {
+    this.agenteSeleccionadoDescripcion = agente.descripcion;
+
+    // Si quieres pasar la descripción al siguiente componente, puedes guardarla en localStorage o en un servicio
+    localStorage.setItem('descripcionAgente', agente.descripcion);
+    console.log(agente.descripcion)
+
+    this.router.navigate(['/asistente']);
   }
 
 }
