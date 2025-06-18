@@ -105,6 +105,7 @@ export class Asistente {
   
     const headers = {
       'Content-Type': 'application/json',
+      'Authorization': 'Bearer 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' // ⚠️ Solo para desarrollo
     };
   
     const body = {
