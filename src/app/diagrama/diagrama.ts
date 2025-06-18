@@ -140,6 +140,7 @@ export class Diagrama implements OnInit {
   // --- Gestión de Selecciones y Creación ---
   seleccionarFondo(fondoUrl: string): void {
     if(this.escenaActual) this.escenaActual.fondo = fondoUrl;
+
   }
 
   seleccionarParte(parte: ArticuloApariencia): void {
@@ -303,4 +304,5 @@ export class Diagrama implements OnInit {
   toggleMenu() {
     this.menuOpen = !this.menuOpen;
   }
+
 }
