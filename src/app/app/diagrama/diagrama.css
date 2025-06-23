@@ -1,0 +1,287 @@
+/* Estilos generales del contenedor del constructor */
+.comic-builder-container {
+    display: flex;
+    flex-wrap: wrap; /* Permite que se ajuste en pantallas pequeñas */
+    gap: 20px;
+    padding: 1rem; /* Usa unidades relativas */
+    height: 100%; /* Ocupa el 100% del contenedor padre */
+    width: 100%;
+    background-color: #f4f4f9;
+    box-sizing: border-box;
+  }
+  
+  /* Columna del lienzo (izquierda) */
+  .lienzo-columna {
+    flex: 3; /* Ocupa más espacio */
+    display: flex;
+    flex-direction: column;
+    gap: 15px;
+    min-width: 300px;
+    height: 100%;
+  }
+  
+  /* Columna de herramientas (derecha) */
+  .herramientas-columna {
+    flex: 1; /* Ocupa menos espacio */
+    min-width: 300px;
+    height: 100%;
+    max-height: calc(100vh - 100px); /* Ajusta a la altura de la vista menos un padding */
+    overflow-y: auto;
+  }
+  
+  /* El lienzo principal de la historieta */
+  .lienzo-principal {
+    flex-grow: 1;
+    border: 2px solid #ccc;
+    border-radius: 8px;
+    position: relative;
+    overflow: hidden;
+    background-size: cover;
+    background-position: center;
+    box-shadow: 0 4px 12px rgba(0,0,0,0.1);
+    min-height: 250px; /* Altura mínima */
+    touch-action: none; /* Prevent default touch actions for better drag/resize */
+  }
+  
+  /* Estilos para un elemento movible en el lienzo */
+  .elemento-canvas {
+    position: absolute;
+    cursor: grab;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    /* Added transition for smoother movement/resize */
+    transition: left 0.1s ease-out, top 0.1s ease-out, width 0.1s ease-out, height 0.1s ease-out;
+  }
+  
+  .elemento-canvas:active {
+    cursor: grabbing;
+  }
+  
+  /* Contenedor que agrupa las partes del personaje */
+  .personaje-container {
+      position: relative;
+      width: 100%;
+      height: 100%;
+      transition: transform 0.3s ease-in-out; /* Added transition for flipping */
+  }
+
+  /* Style to flip the character horizontally */
+  .personaje-container.flipped {
+      transform: scaleX(-1);
+  }
+  
+  /* Capas del personaje */
+  .capa-cuerpo {
+    position: absolute; top: 50%; left: 1%; width: 65%; height: 65%; z-index: 10; object-fit: contain;
+  }
+  .capa-cabeza {
+    position: absolute; top: 3%; left: 7%; width: 65%; height: 65%; z-index: 20; object-fit: contain;
+  }
+  .capa-rostro {
+    position: absolute; top: 24%; left: 28%; width: 38%; height: 38%; z-index: 30; object-fit: contain;
+  }
+  
+  /* Globo de texto (viñeta) */
+  .globo-texto {
+    position: absolute;
+    bottom: +180px;
+    left: 35%;
+    background: white;
+    padding: 8px 12px;
+    border-radius: 20px;
+    border: 2px solid #333;
+    box-shadow: 0 2px 5px rgba(0,0,0,0.2);
+    font-size: 14px;
+    max-width: 150px;
+    text-align: center;
+    word-wrap: break-word;
+    /* Adjustments for flipped character */
+    transform-origin: bottom center; /* Ensures scaling originates from the bottom */
+  }
+
+  /* Adjust globo position when character is flipped */
+  .personaje-container.flipped .globo-texto {
+      transform: scaleX(-1); /* Flip the text back */
+  }
+
+   /* Redimension handles */
+   .control-redimension {
+    position: absolute;
+    width: 15px;
+    height: 15px;
+    background-color: #007bff;
+    border: 1px solid #fff;
+    border-radius: 3px;
+    z-index: 40; /* Above character parts */
+    cursor: nwse-resize;
+   }
+  
+  .sup-izq { top: -7.5px; left: -7.5px; cursor: nwse-resize; }
+  .sup-der { top: -7.5px; right: -7.5px; cursor: nesw-resize; }
+  .inf-izq { bottom: -7.5px; left: -7.5px; cursor: nesw-resize; }
+  .inf-der { bottom: -7.5px; right: -7.5px; cursor: nwse-resize; }
+  
+  /* Delete button */
+  .boton-eliminar {
+      position: absolute;
+      top: -15px;
+      right: -15px;
+      width: 30px;
+      height: 30px;
+      background-color: #dc3545;
+      color: white;
+      border-radius: 50%;
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      cursor: pointer;
+      z-index: 50; /* Above everything */
+      box-shadow: 0 2px 5px rgba(0,0,0,0.2);
+  }
+  
+  /* Barra de miniaturas de escenas */
+  .escenas-barra {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    padding: 10px;
+    background: #fff;
+    border-radius: 8px;
+    box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+    flex-shrink: 0; /* Evita que la barra se encoja */
+    overflow-x: auto; /* Allow horizontal scrolling on small screens */
+    -webkit-overflow-scrolling: touch; /* Smooth scrolling on iOS */
+  }
+  
+  .escena-miniatura {
+    width: 80px;
+    height: 60px;
+    border: 2px solid #ddd;
+    border-radius: 4px;
+    cursor: pointer;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    font-size: 20px;
+    font-weight: bold;
+    color: white;
+    text-shadow: 1px 1px 2px black;
+    transition: transform 0.2s, border-color 0.2s;
+    background-size: cover;
+    background-position: center;
+    flex-shrink: 0; /* Prevent shrinking of thumbnails */
+  }
+  
+  .escena-miniatura:hover {
+    transform: scale(1.05);
+  }
+  
+  .escena-miniatura.activa {
+    border-color: #007bff;
+    box-shadow: 0 0 10px rgba(0, 123, 255, 0.5);
+  }
+  
+  /* Estilos para los selectores de herramientas */
+  .selector-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(60px, 1fr));
+    gap: 10px;
+    padding: 10px 0;
+  }
+  
+  .selector-grid img {
+    width: 100%;
+    height: 60px;
+    object-fit: contain;
+    border: 2px solid transparent;
+    border-radius: 4px;
+    cursor: pointer;
+    transition: transform 0.2s, border-color 0.2s;
+    background-color: #e9ecef;
+  }
+  
+  .selector-grid img:hover {
+    transform: scale(1.1);
+  }
+  
+  .selector-grid img.seleccionado {
+    border-color: #007bff;
+    box-shadow: 0 0 8px rgba(0, 123, 255, 0.5);
+  }
+  
+  .preview-personaje {
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      margin-bottom: 20px;
+      padding: 10px;
+      background-color: #e9ecef;
+      border-radius: 8px;
+      height: 220px;
+  }
+  .preview-personaje .relative {
+      position: relative;
+  }
+  
+  /* Estilo para la notificación de error */
+  .notificacion {
+    padding: 10px;
+    margin-top: 15px; /* Separación del input de texto */
+    border-radius: 5px;
+    background-color: #ffebee; /* Rojo claro para errores */
+    color: #c62828;
+    border: 1px solid #ef9a9a;
+    text-align: center;
+    font-size: 14px;
+    font-weight: 500;
+    transition: background-color 0.3s, color 0.3s;
+  }
+  
+  /* Estilo para la notificación de éxito */
+  .notificacion.notificacion-success {
+    background-color: #e8f5e9; /* Verde claro para éxito */
+    color: #2e7d32;
+    border-color: #a5d6a7;
+  }
+  
+  /* Responsive adjustments for mobile */
+  @media (max-width: 768px) {
+    .comic-builder-container {
+      flex-direction: column; /* Stack columns vertically */
+      gap: 10px; /* Adjust gap for smaller screens */
+      padding: 0.5rem; /* Adjust padding */
+    }
+  
+    .lienzo-columna,
+    .herramientas-columna {
+      flex: none; /* Remove flex grow */
+      width: 100%; /* Take full width */
+      min-width: auto; /* Remove minimum width restriction */
+      height: auto; /* Allow height to be determined by content */
+      max-height: none; /* Remove max height restriction */
+    }
+
+    .lienzo-principal {
+        min-height: 300px; /* Ensure a decent height for the canvas on mobile */
+    }
+
+    .escenas-barra {
+        justify-content: flex-start; /* Align items to the start */
+    }
+
+    .herramientas-columna p-tabView {
+        height: auto; /* Allow tabview to adjust height */
+    }
+
+    .herramientas-columna .p-tabview .p-tabview-panels {
+        padding: 10px; /* Add some padding inside tab panels */
+    }
+  }
+
+  /* Clases de Tailwind usadas en el HTML para compatibilidad */
+  .w-full { width: 100%; }
+  .mt-4 { margin-top: 1rem; }
+  .flex { display: flex; }
+  .gap-2 { gap: 0.5rem; }
+  

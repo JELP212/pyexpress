@@ -12,7 +12,6 @@ import html2canvas from 'html2canvas';
 import jsPDF from 'jspdf';
 import { CookieService } from 'ngx-cookie-service';
 
-// --- Interfaces para la estructura de datos ---
 interface ArticuloApariencia {
   id: string;
   nombre: string;
@@ -331,70 +330,119 @@ export class Diagrama implements OnInit {
   }
 
   renderizarPersonajeComoImagen(elemento: ElementoCanvas): Promise<HTMLImageElement> {
-    return new Promise(async (resolve) => {
+    return new Promise(async (resolve, reject) => {
       const canvas = document.createElement('canvas');
       canvas.width = elemento.ancho;
       canvas.height = elemento.alto;
       const ctx = canvas.getContext('2d');
   
       if (!ctx) {
-        const dummy = new Image();
-        resolve(dummy);
-        return;
+        return reject(new Error("No se pudo obtener el contexto 2D del canvas."));
       }
   
-      const imagenes = [
-        elemento.cuerpo.imagen,
-        elemento.cabeza.imagen,
-        elemento.rostro.imagen
+      // 1. Definimos las reglas de estilo (traducidas de tu CSS a un objeto)
+      const styles = {
+        cuerpo: { top: 0.50, left: 0.01, width: 0.65, height: 0.65 },
+        cabeza: { top: 0.03, left: 0.07, width: 0.65, height: 0.65 },
+        rostro: { top: 0.24, left: 0.28, width: 0.38, height: 0.38 },
+      };
+      const flippedStyles = {
+        cabeza: { top: 0.01, left: -0.06 },
+        rostro: { top: 0.22, left: 0.01 },
+      };
+      
+      // Definimos un tipo explícito para las llaves de nuestro objeto de estilos.
+      type CapaTipo = keyof typeof styles;
+  
+      // CORRECCIÓN 1: Se define el array con el tipo explícito ANTES de filtrar.
+      // Esto asegura que TypeScript no pierda el tipo específico ('cuerpo' | 'cabeza' | 'rostro')
+      // después de la operación .filter().
+      const capasInfoConTipo: { tipo: CapaTipo; url: string; zIndex: number }[] = [
+        { tipo: 'cuerpo', url: elemento.cuerpo.imagen, zIndex: 10 },
+        { tipo: 'cabeza', url: elemento.cabeza.imagen, zIndex: 20 },
+        { tipo: 'rostro', url: elemento.rostro.imagen, zIndex: 30 },
       ];
+      
+      const capasInfo = capasInfoConTipo.filter(capa => capa.url);
   
-      const cargadas: HTMLImageElement[] = [];
+      try {
+        // 2. Cargamos todas las imágenes de las capas en paralelo para mayor eficiencia
+        const imagenesCargadas = await Promise.all(
+          capasInfo.map(async (capa) => {
+            const response = await fetch(capa.url);
+            if (!response.ok) throw new Error(`Falló la carga de: ${capa.url}`);
+            const blob = await response.blob();
+            const img = new Image();
+            img.src = URL.createObjectURL(blob);
+            await img.decode(); // Espera a que la imagen esté lista para usar
+            URL.revokeObjectURL(img.src); // Libera memoria
+            return { img, tipo: capa.tipo, zIndex: capa.zIndex };
+          })
+        );
+        
+        // Ordenamos por zIndex para asegurar el orden de dibujado correcto
+        imagenesCargadas.sort((a, b) => a.zIndex - b.zIndex);
   
-      for (let i = 0; i < imagenes.length; i++) {
-        try {
-          // ✅ Cargar la imagen como blob y crear URL segura
-          const blob = await fetch(imagenes[i]).then(res => res.blob());
-          const blobUrl = URL.createObjectURL(blob);
-  
-          const img = new Image();
-          img.src = blobUrl;
-  
-          await new Promise<void>((res) => {
-            img.onload = () => {
-              cargadas.push(img);
-              res();
-            };
-            img.onerror = () => res(); // continúa aunque falle una
-          });
-  
-        } catch (error) {
-          console.warn(`Error cargando imagen: ${imagenes[i]}`, error);
+        // 3. Aplicamos la inversión horizontal (flip) a todo el canvas si es necesario
+        if (elemento.direction === 'left') {
+          ctx.translate(canvas.width, 0);
+          ctx.scale(-1, 1);
         }
+  
+        // 4. Dibujamos cada capa aplicando sus estilos y respetando el aspect ratio
+        imagenesCargadas.forEach(({ img, tipo }) => {
+          // Ahora `tipo` es 'cuerpo' | 'cabeza' | 'rostro', lo cual es seguro.
+          let layerStyle = { ...styles[tipo] };
+  
+          // CORRECCIÓN 2: Usamos una aserción de tipo para `flippedStyles[tipo]`.
+          // La comprobación `tipo in flippedStyles` garantiza en tiempo de ejecución que `tipo` es
+          // 'cabeza' o 'rostro', pero necesitamos la aserción para que TypeScript lo entienda en tiempo de compilación.
+          if (elemento.direction === 'left' && tipo in flippedStyles) {
+            layerStyle = { ...layerStyle, ...flippedStyles[tipo as keyof typeof flippedStyles] };
+          }
+  
+          // Dimensiones del contenedor de la capa (en píxeles)
+          const boxX = canvas.width * layerStyle.left;
+          const boxY = canvas.height * layerStyle.top;
+          const boxWidth = canvas.width * layerStyle.width;
+          const boxHeight = canvas.height * layerStyle.height;
+  
+          // Lógica para simular `object-fit: contain`
+          const imgRatio = img.naturalWidth / img.naturalHeight;
+          const boxRatio = boxWidth / boxHeight;
+          let finalWidth, finalHeight;
+  
+          if (imgRatio > boxRatio) {
+            finalWidth = boxWidth; // La imagen es más ancha que el contenedor
+            finalHeight = boxWidth / imgRatio;
+          } else {
+            finalHeight = boxHeight; // La imagen es más alta o igual
+            finalWidth = boxHeight * imgRatio;
+          }
+  
+          // Centramos la imagen dentro de su contenedor
+          const finalX = boxX + (boxWidth - finalWidth) / 2;
+          const finalY = boxY + (boxHeight - finalHeight) / 2;
+          
+          ctx.drawImage(img, finalX, finalY, finalWidth, finalHeight);
+        });
+  
+        // 5. Convertimos el canvas final a una imagen para usar en la exportación
+        const finalImg = new Image();
+        finalImg.src = canvas.toDataURL('image/png');
+        finalImg.style.position = 'absolute';
+        finalImg.style.left = `${elemento.x}px`;
+        finalImg.style.top = `${elemento.y}px`;
+        finalImg.style.width = `${elemento.ancho}px`;
+        finalImg.style.height = `${elemento.alto}px`;
+        finalImg.style.zIndex = `${elemento.zIndex}`;
+        
+        resolve(finalImg);
+  
+      } catch (error) {
+        console.error("Error al renderizar el personaje como imagen:", error);
+        reject(error);
       }
-  
-      // Aplica inversión horizontal si es necesario
-      if (elemento.direction === 'left') {
-        ctx.translate(canvas.width, 0);
-        ctx.scale(-1, 1);
-      }
-  
-      // Dibuja cada capa
-      cargadas.forEach(img => {
-        ctx.drawImage(img, 0, 0, canvas.width, canvas.height);
-      });
-  
-      // Convertimos a imagen final para usar en el canvas
-      const finalImg = new Image();
-      finalImg.src = canvas.toDataURL('image/png');
-      finalImg.style.position = 'absolute';
-      finalImg.style.left = `${elemento.x}px`;
-      finalImg.style.top = `${elemento.y}px`;
-      finalImg.style.width = `${elemento.ancho}px`;
-      finalImg.style.height = `${elemento.alto}px`;
-      finalImg.style.zIndex = `${elemento.zIndex}`;
-  
-      resolve(finalImg);
     });
   }
   
@@ -403,11 +451,9 @@ export class Diagrama implements OnInit {
     const escena = this.escenaRef.nativeElement;
     const personajes = this.escenaActual.elementos.filter(e => e.tipo === 'personaje');
   
-    // Oculta contenedores originales de personajes
     const originales = Array.from(escena.querySelectorAll('.personaje-container'));
     originales.forEach((el: any) => el.classList.add('ocultar-temporal'));
   
-    // Renderizar como imagen cada personaje
     const imgs = await Promise.all(personajes.map(p => this.renderizarPersonajeComoImagen(p)));
     imgs.forEach(img => escena.appendChild(img));
   
@@ -423,15 +469,12 @@ export class Diagrama implements OnInit {
         pdf.addImage(imgData, 'PNG', 0, 0, pdfWidth, pdfHeight);
         pdf.save('mi-historieta.pdf');
   
-        // ✅ Aumentar 2 puntos a cookies y Firebase
         const usuarioId = this.cookieService.get('usuarioId');
         const puntosActuales = Number(this.cookieService.get('puntos')) || 0;
         const nuevosPuntos = puntosActuales + 2;
   
-        // 1. Guardar en cookies
         this.cookieService.set('puntos', nuevosPuntos.toString());
   
-        // 2. Actualizar en Firebase
         if (usuarioId) {
           await this.firebaseService.actualizarPuntosUsuario(usuarioId, nuevosPuntos);
           console.log('Puntos actualizados correctamente: +2');
