@@ -49,7 +49,7 @@ interface Escena {
 export class Diagrama implements OnInit {
   @ViewChild('canvas') canvasRef!: ElementRef<HTMLDivElement>;
   @ViewChild('escenaRef', { static: false }) escenaRef!: ElementRef;
-
+  isExporting = false;
 
   menuOpen = false;
   selectedItem = 'Inicio';
@@ -413,21 +413,19 @@ export class Diagrama implements OnInit {
           let finalWidth, finalHeight;
   
           if (imgRatio > boxRatio) {
-            finalWidth = boxWidth; // La imagen es más ancha que el contenedor
+            finalWidth = boxWidth; 
             finalHeight = boxWidth / imgRatio;
           } else {
-            finalHeight = boxHeight; // La imagen es más alta o igual
+            finalHeight = boxHeight; 
             finalWidth = boxHeight * imgRatio;
           }
   
-          // Centramos la imagen dentro de su contenedor
           const finalX = boxX + (boxWidth - finalWidth) / 2;
           const finalY = boxY + (boxHeight - finalHeight) / 2;
           
           ctx.drawImage(img, finalX, finalY, finalWidth, finalHeight);
         });
   
-        // 5. Convertimos el canvas final a una imagen para usar en la exportación
         const finalImg = new Image();
         finalImg.src = canvas.toDataURL('image/png');
         finalImg.style.position = 'absolute';
@@ -480,33 +478,78 @@ export class Diagrama implements OnInit {
           console.log('Puntos actualizados correctamente: +2');
         }
   
-        // Limpiar: remover imágenes temporales y mostrar originales
         imgs.forEach(img => img.remove());
         originales.forEach((el: any) => el.classList.remove('ocultar-temporal'));
       });
     }, 100);
   }
   
-  completado(): void {
-    const usuarioId = this.cookieService.get('usuarioId');
-    const puntosActuales = Number(this.cookieService.get('puntos')) || 0;
-    const nuevosPuntos = puntosActuales + 2;
+  async exportarTodasLasEscenasComoPDF(): Promise<void> {
+    if (this.isExporting) return;
+    if (this.escenas.length === 0) {
+      console.warn("No hay escenas para exportar.");
+      return;
+    }
+
+    this.isExporting = true;
+    const escenaDOM = this.escenaRef.nativeElement;
+    const pdf = new jsPDF({ orientation: 'landscape', unit: 'px' });
+    const originales = Array.from(escenaDOM.querySelectorAll('.personaje-container'));
+    const fondoOriginal = escenaDOM.style.backgroundImage;
+
+    try {
+      originales.forEach((el: any) => el.style.visibility = 'hidden');
+
+      for (const [index, escena] of this.escenas.entries()) {
+        escenaDOM.style.backgroundImage = `url(${escena.fondo})`;
+        const personajes = escena.elementos.filter(e => e.tipo === 'personaje');
+        const imgsTemporales = await Promise.all(personajes.map(p => this.renderizarPersonajeComoImagen(p)));
+        imgsTemporales.forEach(img => escenaDOM.appendChild(img));
   
-    // 1. Guardar en cookies
-    this.cookieService.set('puntos', nuevosPuntos.toString());
+        await this.waitForImagesToLoad(escenaDOM);
   
-    // 2. Actualizar en Firebase
-    if (usuarioId) {
-      this.firebaseService.actualizarPuntosUsuario(usuarioId, nuevosPuntos)
-        .then(() => {
-          console.log('✅ Se sumaron 2 puntos correctamente.');
-        })
-        .catch(error => {
-          console.error('❌ Error al actualizar los puntos en Firebase:', error);
+        const canvas = await html2canvas(escenaDOM, {
+          scale: 2,
+          useCORS: true,
+          backgroundColor: '#ffffff',
+          logging: false
         });
-    } else {
-      console.warn('⚠️ No se encontró usuarioId en cookies.');
+        const imgData = canvas.toDataURL('image/png');
+  
+        const pdfWidth = pdf.internal.pageSize.getWidth();
+        const pdfHeight = (canvas.height * pdfWidth) / canvas.width;
+  
+        if (index === 0) {
+          pdf.addImage(imgData, 'PNG', 0, 0, pdfWidth, pdfHeight);
+        } else {
+          pdf.addPage([pdfWidth, pdfHeight], 'landscape');
+          pdf.addImage(imgData, 'PNG', 0, 0, pdfWidth, pdfHeight);
+        }
+  
+        imgsTemporales.forEach(img => img.remove());
+      }
+      
+      pdf.save('mi-historieta-completa.pdf');
+      
+      await this.actualizarPuntosPorExportacion();
+
+    } catch (error) {
+      console.error("Ocurrió un error al exportar la historieta completa:", error);
+    } finally {
+      escenaDOM.style.backgroundImage = fondoOriginal;
+      originales.forEach((el: any) => el.style.visibility = 'visible');
+      this.isExporting = false;
     }
   }
   
+  private async actualizarPuntosPorExportacion(): Promise<void> {
+    const usuarioId = this.cookieService.get('usuarioId');
+    if (usuarioId) {
+      const puntosActuales = Number(this.cookieService.get('puntos')) || 0;
+      const nuevosPuntos = puntosActuales + 2;
+      this.cookieService.set('puntos', nuevosPuntos.toString());
+      await this.firebaseService.actualizarPuntosUsuario(usuarioId, nuevosPuntos);
+      console.log('Puntos actualizados: +2');
+    }
+  }
 }
