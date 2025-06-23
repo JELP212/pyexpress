@@ -8,6 +8,7 @@ import { SidebarModule } from 'primeng/sidebar'
 import { MenuModule } from 'primeng/menu';
 import { Firebase } from '../services/firebase';
 import { RouterModule } from '@angular/router';
+import { CookieService } from 'ngx-cookie-service';
 
 @Component({
   selector: 'app-chat',
@@ -25,7 +26,7 @@ import { RouterModule } from '@angular/router';
 })
 export class Chat {
 
-  constructor(private router: Router,private firebaseService: Firebase) {}
+  constructor(private router: Router,private firebaseService: Firebase,private cookieService: CookieService) {}
 
   menuOpen = false;
   selectedItem = 'Inicio'
@@ -56,7 +57,8 @@ export class Chat {
   ];
   
   logout() {
-    localStorage.clear(); // o lo que uses para manejar sesión
+    localStorage.clear();
+    this.cookieService.deleteAll('/');
     this.router.navigate(['/login']);
   }
 

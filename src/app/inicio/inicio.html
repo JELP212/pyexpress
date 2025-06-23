@@ -59,7 +59,7 @@
               </div>
               <div>
                 <h3 class="text-white font-bold">¡Crea una historieta ahora!</h3>
-                <p class="text-sm text-white font-semibold">Morbi gravida in arcu sed scelerisque. Integer bibendum ante vitae est consequat feugiat. Proin consequat.</p>
+                <p class="text-sm text-white font-semibold">Cada trazo y cada palabra pueden reflejar tus ideas, emociones y sueños. ¡Es momento de dejar volar tu imaginación!</p>
               </div>
             </div>
           </div>
@@ -71,22 +71,10 @@
               <a href="/tienda" class="text-blue-500 text-sm font-medium">Ver más</a>
             </div>
             <div class="flex space-x-3 overflow-x-auto">
-              <div class="relative bg-gray-100 rounded-xl p-4 w-32 h-24 flex items-center justify-center">
-                <img src="/ruta/a/tu/imagen.png" alt="Gorra" class="h-16 object-contain" />
+              <div *ngFor="let producto of productosDestacados" class="relative bg-gray-100 rounded-xl p-4 w-32 h-24 flex items-center justify-center">
+                <img [src]="producto.imagen" class="h-16 object-contain" />
                 <div class="absolute bottom-0 right-0 bg-blue-200 text-white text-sm px-2 py-1 rounded-tl-lg">
-                  8 pts
-                </div>
-              </div>
-              <div class="relative bg-gray-100 rounded-xl p-4 w-32 h-24 flex items-center justify-center">
-                <img src="/ruta/a/tu/imagen.png" alt="Gorra" class="h-16 object-contain" />
-                <div class="absolute bottom-0 right-0 bg-blue-200 text-white text-sm px-2 py-1 rounded-tl-lg">
-                  8 pts
-                </div>
-              </div>
-              <div class="relative bg-gray-100 rounded-xl p-4 w-32 h-24 flex items-center justify-center">
-                <img src="/ruta/a/tu/imagen.png" alt="Gorra" class="h-16 object-contain" />
-                <div class="absolute bottom-0 right-0 bg-blue-200 text-white text-sm px-2 py-1 rounded-tl-lg">
-                  8 pts
+                  {{ producto.costo }} pts
                 </div>
               </div>
             </div>

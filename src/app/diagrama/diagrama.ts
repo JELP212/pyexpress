@@ -8,6 +8,9 @@ import { TabViewModule } from 'primeng/tabview';
 import { Router } from '@angular/router';
 import { Firebase } from '../services/firebase';
 import { RouterModule } from '@angular/router';
+import html2canvas from 'html2canvas';
+import jsPDF from 'jspdf';
+import { CookieService } from 'ngx-cookie-service';
 
 // --- Interfaces para la estructura de datos ---
 interface ArticuloApariencia {
@@ -46,6 +49,8 @@ interface Escena {
 })
 export class Diagrama implements OnInit {
   @ViewChild('canvas') canvasRef!: ElementRef<HTMLDivElement>;
+  @ViewChild('escenaRef', { static: false }) escenaRef!: ElementRef;
+
 
   menuOpen = false;
   selectedItem = 'Inicio';
@@ -69,10 +74,10 @@ export class Diagrama implements OnInit {
   cuerpoSeleccionado: ArticuloApariencia | null = null;
   mensajePersonaje = '';
   fondosDisponibles: string[] = [
-    'https://placehold.co/800x600/a2d2ff/ffffff?text=Parque',
-    'https://placehold.co/800x600/ffc09f/ffffff?text=Calle',
-    'https://placehold.co/800x600/fcf5c7/ffffff?text=Escuela',
-    'https://placehold.co/800x600/a0c4ff/ffffff?text=Interior'
+    'https://media.istockphoto.com/id/1481024454/es/vector/parque-infantil-para-el-concepto-de-juego-infantil-ilustraci%C3%B3n-de-dise%C3%B1o-gr%C3%A1fico-vectorial.jpg?s=612x612&w=0&k=20&c=KY8wH9i7caWJj1p7vBHBesyiSobJwnxK8zWjSvuavVQ=',
+    'https://static.vecteezy.com/system/resources/previews/001/630/637/non_2x/city-street-flat-background-vector.jpg',
+    'https://thumbs.dreamstime.com/b/construcci%C3%B3n-de-escuelas-dibujos-animados-volver-la-escuela-plano-concepto-educativo-ilustraci%C3%B3n-vectorial-192262653.jpg',
+    'https://thumbs.dreamstime.com/b/interior-de-sala-estar-dibujos-animados-dise%C3%B1o-%C3%A1rea-sof%C3%A1-vac%C3%ADo-plano-moderno-sal%C3%B3n-apartamentos-con-moqueta-mobiliario-211935946.jpg'
   ];
 
   // --- Propiedades de Interacción ---
@@ -96,7 +101,7 @@ export class Diagrama implements OnInit {
     rostro: 0
   };
 
-  constructor(private router: Router,private firebaseService: Firebase) {}
+  constructor(private router: Router,private firebaseService: Firebase,private cookieService: CookieService) {}
 
   ngOnInit(): void {
     this.agregarNuevaEscena();
@@ -164,7 +169,10 @@ export class Diagrama implements OnInit {
       direction: 'right' // Default direction
     };
     this.escenaActual.elementos.push(nuevoPersonaje);
-    this.cuerpoSeleccionado = null; this.cabezaSeleccionada = null; this.rostroSeleccionado = null; this.mensajePersonaje = '';
+    this.cuerpoSeleccionado = this.articulosCuerpo[0] || null;
+    this.cabezaSeleccionada = this.articulosCabeza[0] || null;
+    this.rostroSeleccionado = this.articulosRostro[0] || null;
+    this.mensajePersonaje = '';
     this.mostrarNotificacion('¡Personaje añadido con éxito!', 'success');
   }
 
@@ -297,7 +305,8 @@ export class Diagrama implements OnInit {
   }
 
   logout() {
-    localStorage.clear(); // o lo que uses para manejar sesion
+    localStorage.clear();
+    this.cookieService.deleteAll('/');
     this.router.navigate(['/login']);
   }
 
@@ -305,4 +314,156 @@ export class Diagrama implements OnInit {
     this.menuOpen = !this.menuOpen;
   }
 
+
+  waitForImagesToLoad(container: HTMLElement): Promise<void> {
+    const images = Array.from(container.querySelectorAll('img'));
+    const promises = images.map(img => {
+      return new Promise<void>(resolve => {
+        if (img.complete) {
+          resolve();
+        } else {
+          img.onload = () => resolve();
+          img.onerror = () => resolve();
+        }
+      });
+    });
+    return Promise.all(promises).then(() => {});
+  }
+
+  renderizarPersonajeComoImagen(elemento: ElementoCanvas): Promise<HTMLImageElement> {
+    return new Promise(async (resolve) => {
+      const canvas = document.createElement('canvas');
+      canvas.width = elemento.ancho;
+      canvas.height = elemento.alto;
+      const ctx = canvas.getContext('2d');
+  
+      if (!ctx) {
+        const dummy = new Image();
+        resolve(dummy);
+        return;
+      }
+  
+      const imagenes = [
+        elemento.cuerpo.imagen,
+        elemento.cabeza.imagen,
+        elemento.rostro.imagen
+      ];
+  
+      const cargadas: HTMLImageElement[] = [];
+  
+      for (let i = 0; i < imagenes.length; i++) {
+        try {
+          // ✅ Cargar la imagen como blob y crear URL segura
+          const blob = await fetch(imagenes[i]).then(res => res.blob());
+          const blobUrl = URL.createObjectURL(blob);
+  
+          const img = new Image();
+          img.src = blobUrl;
+  
+          await new Promise<void>((res) => {
+            img.onload = () => {
+              cargadas.push(img);
+              res();
+            };
+            img.onerror = () => res(); // continúa aunque falle una
+          });
+  
+        } catch (error) {
+          console.warn(`Error cargando imagen: ${imagenes[i]}`, error);
+        }
+      }
+  
+      // Aplica inversión horizontal si es necesario
+      if (elemento.direction === 'left') {
+        ctx.translate(canvas.width, 0);
+        ctx.scale(-1, 1);
+      }
+  
+      // Dibuja cada capa
+      cargadas.forEach(img => {
+        ctx.drawImage(img, 0, 0, canvas.width, canvas.height);
+      });
+  
+      // Convertimos a imagen final para usar en el canvas
+      const finalImg = new Image();
+      finalImg.src = canvas.toDataURL('image/png');
+      finalImg.style.position = 'absolute';
+      finalImg.style.left = `${elemento.x}px`;
+      finalImg.style.top = `${elemento.y}px`;
+      finalImg.style.width = `${elemento.ancho}px`;
+      finalImg.style.height = `${elemento.alto}px`;
+      finalImg.style.zIndex = `${elemento.zIndex}`;
+  
+      resolve(finalImg);
+    });
+  }
+  
+  
+  async exportarEscenaComoPDF(): Promise<void> {
+    const escena = this.escenaRef.nativeElement;
+    const personajes = this.escenaActual.elementos.filter(e => e.tipo === 'personaje');
+  
+    // Oculta contenedores originales de personajes
+    const originales = Array.from(escena.querySelectorAll('.personaje-container'));
+    originales.forEach((el: any) => el.classList.add('ocultar-temporal'));
+  
+    // Renderizar como imagen cada personaje
+    const imgs = await Promise.all(personajes.map(p => this.renderizarPersonajeComoImagen(p)));
+    imgs.forEach(img => escena.appendChild(img));
+  
+    await this.waitForImagesToLoad(escena);
+  
+    setTimeout(async () => {
+      html2canvas(escena, { scale: 2, useCORS: true }).then(async (canvas) => {
+        const imgData = canvas.toDataURL('image/png');
+        const pdf = new jsPDF();
+        const pdfWidth = pdf.internal.pageSize.getWidth();
+        const pdfHeight = (canvas.height * pdfWidth) / canvas.width;
+  
+        pdf.addImage(imgData, 'PNG', 0, 0, pdfWidth, pdfHeight);
+        pdf.save('mi-historieta.pdf');
+  
+        // ✅ Aumentar 2 puntos a cookies y Firebase
+        const usuarioId = this.cookieService.get('usuarioId');
+        const puntosActuales = Number(this.cookieService.get('puntos')) || 0;
+        const nuevosPuntos = puntosActuales + 2;
+  
+        // 1. Guardar en cookies
+        this.cookieService.set('puntos', nuevosPuntos.toString());
+  
+        // 2. Actualizar en Firebase
+        if (usuarioId) {
+          await this.firebaseService.actualizarPuntosUsuario(usuarioId, nuevosPuntos);
+          console.log('Puntos actualizados correctamente: +2');
+        }
+  
+        // Limpiar: remover imágenes temporales y mostrar originales
+        imgs.forEach(img => img.remove());
+        originales.forEach((el: any) => el.classList.remove('ocultar-temporal'));
+      });
+    }, 100);
+  }
+  
+  completado(): void {
+    const usuarioId = this.cookieService.get('usuarioId');
+    const puntosActuales = Number(this.cookieService.get('puntos')) || 0;
+    const nuevosPuntos = puntosActuales + 2;
+  
+    // 1. Guardar en cookies
+    this.cookieService.set('puntos', nuevosPuntos.toString());
+  
+    // 2. Actualizar en Firebase
+    if (usuarioId) {
+      this.firebaseService.actualizarPuntosUsuario(usuarioId, nuevosPuntos)
+        .then(() => {
+          console.log('✅ Se sumaron 2 puntos correctamente.');
+        })
+        .catch(error => {
+          console.error('❌ Error al actualizar los puntos en Firebase:', error);
+        });
+    } else {
+      console.warn('⚠️ No se encontró usuarioId en cookies.');
+    }
+  }
+  
 }

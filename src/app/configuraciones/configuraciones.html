@@ -1,5 +1,6 @@
 <!-- TOPBAR FIJA -->
 <router-outlet></router-outlet>
+<p-toast></p-toast>
 <div class="w-full bg-[#5B9BBe] py-4 flex items-center justify-center rounded-b-2xl shadow-md fixed top-0 left-0 z-10">
     <div class="fixed top-4 left-4 z-50">
         <button (click)="toggleMenu()" class="text-white focus:outline-none">
@@ -23,30 +24,27 @@
             <h2 class="text-lg font-semibold text-[#6196bb] mb-1">Datos personales</h2>
 
             <label class="block mb-2 text-sm font-medium text-gray-700" for="nombres">Nombres</label>
-            <input type="text" id="nombres"
-                class="w-full px-4 py-2 border rounded-md focus:outline-none focus:ring-2 focus:ring-[#5B9BBe]"
-            />
+            <input type="text" id="nombres" [(ngModel)]="nombres"
+              class="w-full px-4 py-2 border rounded-md focus:outline-none focus:ring-2 focus:ring-[#5B9BBe]" />
 
+            <!-- Apellidos -->
             <label class="block mt-2 mb-2 text-sm font-medium text-gray-700" for="apellidos">Apellidos</label>
-            <input type="text" id="apellidos"
-                class="w-full px-4 py-2 border rounded-md focus:outline-none focus:ring-2 focus:ring-[#5B9BBe]"
-            />
+            <input type="text" id="apellidos" [(ngModel)]="apellidos"
+              class="w-full px-4 py-2 border rounded-md focus:outline-none focus:ring-2 focus:ring-[#5B9BBe]" />
 
-            <h2 class="text-lg font-semibold text-[#6196bb] mb-1 mt-6">Acceso</h2>
             <!-- Contraseña -->
+            <h2 class="text-lg font-semibold text-[#6196bb] mb-1 mt-6">Acceso</h2>
             <label class="block mt-2 mb-2 text-sm font-medium text-gray-700" for="password">Contraseña</label>
             <div class="relative">
-                <input [type]="verPassword ? 'text' : 'password'" id="password"
-                    class="w-full px-4 py-2 border rounded-md focus:outline-none focus:ring-2 focus:ring-[#5B9BBe]" />
-                    <i 
-                    class="absolute right-3 top-1/2 transform -translate-y-1/2 cursor-pointer text-gray-500"
-                    [ngClass]="verPassword ? 'pi pi-eye-slash' : 'pi pi-eye'"
-                    (click)="verPassword = !verPassword">
-                  </i>
+              <input [type]="verPassword ? 'text' : 'password'" id="password" [(ngModel)]="password"
+                class="w-full px-4 py-2 border rounded-md focus:outline-none focus:ring-2 focus:ring-[#5B9BBe]" />
+              <i class="absolute right-3 top-1/2 transform -translate-y-1/2 cursor-pointer text-gray-500"
+                [ngClass]="verPassword ? 'pi pi-eye-slash' : 'pi pi-eye'" (click)="verPassword = !verPassword">
+              </i>
             </div>
 
             <!-- Botón de inicio de sesión -->
-            <button (click)="irAFormulario()"
+            <button (click)="guardarDatos()"
                 class="w-full bg-[#4C8C64] hover:bg-[#3a6e4e] text-white font-semibold py-2 px-4 rounded-md flex justify-center items-center gap-2 mb-4 mt-8">
                 Guardar
             </button>

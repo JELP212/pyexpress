@@ -20,6 +20,12 @@
         <div class="w-full max-w-md">
 
             <h2 class="text-lg font-semibold text-gray-800 mb-1">Diagramas y historietas</h2>
+            <p-button 
+              label="Completado" 
+              icon="pi pi-download" 
+              (click)="completado()"
+              styleClass="p-button-success mt-2">
+            </p-button>
 
             <!-- Contenedor principal del constructor de historietas -->
 <div class="comic-builder-container">
@@ -28,7 +34,7 @@
   <div class="lienzo-columna">
     
     <!-- Lienzo principal -->
-    <div #canvas class="lienzo-principal" 
+    <div #escenaRef id="escena-container" #canvas class="lienzo-principal" 
          [style.backgroundImage]="'url(' + (escenaActual ? escenaActual.fondo : '') + ')'"
          (mousedown)="deseleccionarTodo($event)" 
          (touchstart)="deseleccionarTodo($event)">
@@ -68,6 +74,7 @@
           </div>
         </ng-container>
       </div>
+      
     </div>
 
     <!-- Barra de escenas -->

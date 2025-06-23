@@ -1,5 +1,6 @@
 <!-- TOPBAR FIJA -->
 <router-outlet></router-outlet>
+<p-toast></p-toast>
 <div class="w-full bg-[#5B9BBe] py-4 flex items-center justify-center rounded-b-2xl shadow-md fixed top-0 left-0 z-10">
     <div class="fixed top-4 left-4 z-50">
 
@@ -10,86 +11,93 @@
 </div>
 
 <!-- CONTENEDOR QUE RELLENA TODA LA PANTALLA (menos el topbar) -->
-<div class="w-full" style="height: calc(100vh - 72px); margin-top: 72px;">
-    <!-- FORMULARIO que ocupa TODO el espacio -->
-    <div class="w-full h-full bg-white flex items-start justify-center px-4 pt-2">
+<div class="w-full h-screen pt-[72px]">
+  <div class="max-w-md mx-auto h-full flex flex-col bg-white border-l border-r border-gray-300">
 
-        <div class="w-full max-w-md">
+    <!-- HEADER -->
+    <div class="flex items-center justify-between px-4 py-4 relative">
+      <button class="absolute left-4 text-[#5295b2]" [routerLink]="['/chat']">
+        <svg class="w-6 h-6" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+          <path stroke-linecap="round" stroke-linejoin="round" d="M15 19l-7-7 7-7" />
+        </svg>
+      </button>
+      <h1 class="w-full text-center text-xl font-bold text-gray-700">Expoasistente</h1>
+    </div>
+    <div class="border-t border-[#5295b2]"></div>
 
-            <div class="flex items-center justify-between px-4 pt-4 pb-2 relative">
-                <!-- Flecha izquierda -->
-                <button class="absolute left-4 text-[#5295b2]" [routerLink]="['/chat']">
-                  <svg class="w-6 h-6" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
-                    <path stroke-linecap="round" stroke-linejoin="round" d="M15 19l-7-7 7-7" />
-                  </svg>
-                </button>
-                
-                <!-- Título centrado -->
-                <h1 class="w-full text-center text-xl font-bold text-gray-700">Expoasistente</h1>
-            </div>
-            <div class="border-t border-[#5295b2]"></div>
-
-            <div *ngFor="let msg of mensajes" class="w-full">
-  <!-- Mensaje del usuario -->
-              <div *ngIf="msg.tipo === 'usuario'" class="flex justify-end mt-2">
-                <div class="bg-[#a8d4b9] text-white p-4 w-fit max-w-[90%] rounded-bl-2xl rounded-tl-2xl rounded-br-2xl">
-                  {{ msg.texto }}
-                </div>
-              </div>
-
-              <!-- Mensaje de ChatGPT -->
-              <div *ngIf="msg.tipo === 'chatgpt'" class="flex justify-start mt-4">
-                <div class="bg-[#b4def1] text-white p-4 w-fit max-w-[90%] rounded-tr-2xl rounded-br-2xl rounded-bl-2xl">
-                  {{ msg.texto }}
-                  <button
-                    (click)="hablar(msg.texto)"
-                    class="absolute bottom-2 right-2 text-white hover:text-blue-800"
-                    title="Reproducir audio"
-                  >
-                    <i class="pi pi-volume-up text-lg"></i>
-                  </button>
-                </div>
-              </div>
-            </div>
-             
-            <div class="flex items-center border border-gray-300 rounded-xl px-4 py-2 w-full max-w-xl">
-              <input
-                type="text"
-                placeholder="Escribe un mensaje..."
-                class="flex-1 outline-none text-gray-700 placeholder-gray-400"
-                [(ngModel)]="mensaje"
-              />
-            
-              <!-- Mostrar micrófono cuando mensaje está vacío -->
-              <button
-                *ngIf="!mensaje || mensaje.trim() === ''"
-                (click)="startListening()"
-                class="ml-2 text-blue-500 hover:text-blue-600"
-              >
-                <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6" fill="none"
-                     viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
-                  <path stroke-linecap="round" stroke-linejoin="round"
-                        d="M12 1v10m0 0c2.21 0 4-1.79 4-4V5a4 4 0 10-8 0v2c0 2.21 1.79 4 4 4zm0 0v6m4 0H8" />
-                </svg>
-              </button>
-            
-              <!-- Mostrar botón enviar cuando mensaje tiene contenido -->
-              <button
-                *ngIf="mensaje && mensaje.trim() !== ''"
-                (click)="enviarMensaje()"
-                class="ml-2 text-blue-500 hover:text-blue-600"
-              >
-                <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6" fill="currentColor"
-                     viewBox="0 0 20 20">
-                  <path
-                    d="M2.94 2.94a1.5 1.5 0 012.12 0L18 15l-3 3L2.94 5.06a1.5 1.5 0 010-2.12zM3.5 3.5L13 13h-2l-8.5-8.5a.5.5 0 01.5-.5z" />
-                </svg>
-              </button>
-            </div>
-            
+    <!-- MENSAJES -->
+    <div class="flex-1 overflow-y-auto px-4 py-2">
+      <div *ngFor="let msg of mensajes" class="w-full">
+        <div *ngIf="msg.tipo === 'usuario'" class="flex justify-end mt-2">
+          <div class="bg-[#a8d4b9] text-white p-4 w-fit max-w-[90%] rounded-bl-2xl rounded-tl-2xl rounded-br-2xl">
+            {{ msg.texto }}
+          </div>
         </div>
 
+        <div *ngIf="msg.tipo === 'chatgpt'" class="flex justify-start mt-4 relative">
+          <div class="bg-[#b4def1] text-white p-4 w-fit max-w-[90%] rounded-tr-2xl rounded-br-2xl rounded-bl-2xl relative">
+            {{ msg.texto }}
+            <button
+              (click)="hablar(msg.texto)"
+              class="absolute bottom-1 right-2 text-white hover:text-blue-800"
+              title="{{ audioEnReproduccion === msg.texto && !estaPausado ? 'Pausar' : 'Reproducir' }}"
+            >
+            <i
+            [ngClass]="{
+              'pi': true,
+              'text-lg': true,
+              'pi-pause': audioEnReproduccion === msg.texto && !estaPausado,
+              'pi-volume-up': audioEnReproduccion !== msg.texto || estaPausado
+            }"
+          ></i>
+          </button>
+          </div>
+        </div>
+      </div>
     </div>
-    
+
+    <div *ngIf="estaEscribiendo" class="flex justify-start mt-4">
+      <div class="bg-[#b4def1] text-white p-4 w-fit max-w-[90%] rounded-tr-2xl rounded-br-2xl rounded-bl-2xl italic animate-pulse">
+        Escribiendo...
+      </div>
+    </div>
+    <!-- INPUT FIJO ABAJO -->
+    <div class="border-t px-4 py-2 bg-white">
+      <div class="flex items-center border border-gray-300 rounded-xl px-4 py-2 w-full">
+        <input
+          type="text"
+          placeholder="Escribe un mensaje..."
+          class="flex-1 outline-none text-gray-700 placeholder-gray-400"
+          [(ngModel)]="mensaje"
+        />
+
+        <button
+          *ngIf="!mensaje || mensaje.trim() === ''"
+          (click)="startListening()"
+          class="ml-2 text-blue-500 hover:text-blue-600"
+        >
+          <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6" fill="none"
+               viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+            <path stroke-linecap="round" stroke-linejoin="round"
+                  d="M12 1v10m0 0c2.21 0 4-1.79 4-4V5a4 4 0 10-8 0v2c0 2.21 1.79 4 4 4zm0 0v6m4 0H8" />
+          </svg>
+        </button>
+
+        <button
+          *ngIf="mensaje && mensaje.trim() !== ''"
+          (click)="enviarMensaje()"
+          class="ml-2 text-blue-500 hover:text-blue-600"
+        >
+          <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6" fill="currentColor"
+               viewBox="0 0 20 20">
+            <path
+              d="M2.94 2.94a1.5 1.5 0 012.12 0L18 15l-3 3L2.94 5.06a1.5 1.5 0 010-2.12zM3.5 3.5L13 13h-2l-8.5-8.5a.5.5 0 01.5-.5z" />
+          </svg>
+        </button>
+      </div>
+    </div>
+
+  </div>
 </div>
+
 

@@ -218,8 +218,21 @@
   
   .personaje-container.flipped img {
     transform: scaleX(-1);
+    backface-visibility: hidden;
+  will-change: transform;
   }
   
+  
+  .personaje-container.flipped .capa-cabeza {
+    top: 1%;
+    left: -6%;
+  }
+  
+  .personaje-container.flipped .capa-rostro {
+    top: 22%;
+    left: 1%;
+  }
+
   .triple-selector {
     display: flex;
     flex-direction: column;

@@ -88,10 +88,16 @@ export class Formulario {
     if (this.preguntaActualIndex < this.preguntas.length - 1) {
       this.preguntaActualIndex++;
     } else {
-      // Guardar en Firestore
+      // 🔢 Calcular nivel antes de guardar
+      const resultado = this.calcularNivel();
+      console.log('Puntaje total:', resultado.total);
+      console.log('Nivel:', resultado.nivel);
+      alert(`Puntaje total: ${resultado.total}\n${resultado.nivel}`);
+  
+      // 💾 Guardar en Firestore
       const usuarioId = this.cookieService.get('usuarioId');
       if (usuarioId) {
-        this.firebaseService.guardarFormulario(usuarioId, this.respuestas)
+        this.firebaseService.guardarFormulario(usuarioId, this.respuestas, resultado.nivel)
           .then(() => {
             console.log('Formulario guardado con éxito');
             this.router.navigate(['/intereses']);
@@ -103,7 +109,7 @@ export class Formulario {
         alert('No se encontró el ID del usuario');
       }
     }
-  }
+  }  
   
 
   regresar() {
@@ -116,5 +122,39 @@ export class Formulario {
 
   esUltimaPregunta(): boolean {
     return this.preguntaActualIndex === this.preguntas.length - 1;
+    
   }
+
+  calcularNivel() {
+    // Mapeo: respuesta textual → puntaje numérico
+    const mapaPuntajes: { [clave: string]: number } = {
+      'Nunca': 0,
+      'A veces': 1,
+      'Frecuentemente': 2,
+      'Siempre': 3
+    };
+  
+    // Sumar puntajes
+    const puntajes = this.respuestas.map(r => mapaPuntajes[r] ?? 0);
+    const total = puntajes.reduce((suma, valor) => suma + valor, 0);
+  
+    // Evaluar nivel
+    let nivel = '';
+    if (total >= 8 && total <= 14) {
+      nivel = 'Nivel 1';
+    } else if (total >= 15 && total <= 22) {
+      nivel = 'Nivel 2';
+    } else if (total >= 23 && total <= 33) {
+      nivel = 'Nivel 3';
+    } else {
+      nivel = 'Sin nivel asignado'; // Por si está fuera de los rangos
+    }
+  
+    // Mostrar en consola o usar en tu interfaz
+    console.log('Total:', total);
+    console.log('Nivel:', nivel);
+  
+    return { total, nivel };
+  }
+  
 }

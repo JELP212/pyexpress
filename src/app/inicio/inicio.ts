@@ -33,9 +33,13 @@ export class Inicio implements OnInit {
   puntosUsuario: string = '';
   interesesUsuario: string[] = [];
   avatarPartes: any[] = [];
+  productosDestacados: any[] = [];
 
   selectedItem = 'Inicio' 
   ngOnInit(): void {
+    this.firebaseService.getArticulosConCategorias().subscribe((articulos) => {
+      this.productosDestacados = articulos.slice(0, 3);
+    });
     const nombresCookie = document.cookie
       .split('; ')
       .find(row => row.startsWith('nombres='));
@@ -47,6 +51,7 @@ export class Inicio implements OnInit {
     const puntosCookie = document.cookie
       .split('; ')
       .find(row => row.startsWith('puntos='));
+    
   
     if (nombresCookie) {
       this.nombresUsuario = decodeURIComponent(nombresCookie.split('=')[1]);
@@ -95,7 +100,8 @@ export class Inicio implements OnInit {
   ];
   
   logout() {
-    localStorage.clear(); // o lo que uses para manejar sesión
+    localStorage.clear(); 
+    this.cookieService.deleteAll('/');
     this.router.navigate(['/login']);
   }
   

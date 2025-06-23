@@ -50,8 +50,8 @@ export class Firebase {
       const usuario = usuarios.find(u => u.correo === correo && u.password === password);
   
       if (usuario) {
-        const { nombres, apellidos, id: UsuarioId, puntos } = usuario;
-        return { nombres, apellidos, UsuarioId, puntos };
+        const { nombres, apellidos, id: UsuarioId, puntos, password } = usuario;
+        return { nombres, apellidos, UsuarioId, puntos,password };
       }
   
       return null;
@@ -63,11 +63,12 @@ export class Firebase {
   }
   
 
-  guardarFormulario(usuarioId: string, respuestas: string[]): Promise<any> {
+  guardarFormulario(usuarioId: string, respuestas: string[],nivel: string): Promise<any> {
     const formularioRef = collection(this.firestore, 'Formulario');
     return addDoc(formularioRef, {
       usuarioId,
-      respuestas
+      respuestas,
+      nivel,
     });
   }
 
@@ -221,4 +222,10 @@ export class Firebase {
       })
     );
   }
+  
+  actualizarDatosUsuario(usuarioId: string, datos: any): Promise<void> {
+    const userRef = doc(this.firestore, 'Usuarios', usuarioId);
+    return updateDoc(userRef, datos);
+  }
+  
 }

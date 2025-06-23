@@ -9,6 +9,10 @@ import { MenuModule } from 'primeng/menu';
 import { Firebase } from '../services/firebase';
 import { RouterModule } from '@angular/router';
 import { CookieService } from 'ngx-cookie-service';
+import { MessagesModule } from 'primeng/messages';
+import { MessageService } from 'primeng/api';
+import { ToastModule } from 'primeng/toast';
+
 
 @Component({
   selector: 'app-avatar',
@@ -19,14 +23,15 @@ import { CookieService } from 'ngx-cookie-service';
     ButtonModule,
     SidebarModule,
     MenuModule,
-    RouterModule
+    RouterModule,MessagesModule,ToastModule
   ],
+  providers: [MessageService],
   templateUrl: './avatar.html',
   styleUrl: './avatar.css'
 })
 export class Avatar {
 
-  constructor(private router: Router,private firebaseService: Firebase,private cookieService: CookieService,) {}
+  constructor(private router: Router,private firebaseService: Firebase,private cookieService: CookieService,private messageService: MessageService) {}
   menuOpen = false;
   selectedItem = 'Inicio'
   articulosCabeza: any[] = [];
@@ -101,6 +106,7 @@ export class Avatar {
   
   logout() {
     localStorage.clear();
+    this.cookieService.deleteAll('/');
     this.router.navigate(['/login']);
   }
 
@@ -158,13 +164,28 @@ export class Avatar {
     };
   
     this.firebaseService.guardarAvatarUsuario(avatarData)
-      .then(() => {
-        alert('Avatar guardado correctamente.');
-        this.router.navigate(['/inicio']);
-      })
-      .catch((error) => {
-        console.error('Error al guardar el avatar:', error);
-      });
+  .then(() => {
+    this.messageService.add({
+      severity: 'success',
+      summary: 'Avatar guardado',
+      detail: 'Tu avatar fue guardado correctamente 🎉',
+      life: 3000
+    });
+
+    setTimeout(() => {
+      this.router.navigate(['/inicio']);
+    }, 1000); // esperar un segundo para que el mensaje se vea antes de redirigir
+  })
+  .catch((error) => {
+    console.error('Error al guardar el avatar:', error);
+    this.messageService.add({
+      severity: 'error',
+      summary: 'Error',
+      detail: 'No se pudo guardar tu avatar. Intenta nuevamente.',
+      life: 3000
+    });
+  });
+
   }
   
 

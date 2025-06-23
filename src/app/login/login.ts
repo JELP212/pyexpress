@@ -40,6 +40,7 @@ export class Login {
         document.cookie = `apellidos=${usuario.apellidos}; path=/`;
         document.cookie = `usuarioId=${usuario.UsuarioId}; path=/`;
         document.cookie = `puntos=${usuario.puntos}; path=/`;
+        document.cookie = `password=${usuario.password}; path=/`;
         this.router.navigate(['/inicio']);
       } else {
         alert('Credenciales inválidas');

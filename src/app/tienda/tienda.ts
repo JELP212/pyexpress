@@ -65,7 +65,8 @@ export class Tienda {
   ];
   
   logout() {
-    localStorage.clear(); // o lo que uses para manejar sesión
+    localStorage.clear();
+    this.cookieService.deleteAll('/');
     this.router.navigate(['/login']);
   }
 
@@ -86,46 +87,42 @@ export class Tienda {
       return;
     }
   
-    // Primero: validamos si ya compró ese artículo
-    this.firebaseService.verificarCompra(usuarioId, articulo.nombre).then((yaComprado) => {
+    this.firebaseService.verificarCompra(usuarioId, articulo.nombre).then(async (yaComprado) => {
       if (yaComprado) {
         alert('Ya has comprado este artículo.');
         return;
       }
   
-      // Segundo: obtenemos los puntos
-      this.firebaseService.verificarCompra(usuarioId, articulo.nombre).then(async (yaComprado) => {
-        if (yaComprado) {
-          alert('Ya has comprado este artículo.');
+      try {
+        const usuarioData = await firstValueFrom(this.firebaseService.obtenerUsuario(usuarioId));
+        const puntosActuales = usuarioData?.puntos || 0;
+  
+        if (puntosActuales < articulo.costo) {
+          alert('No tienes suficientes puntos para comprar este artículo.');
           return;
         }
-      
-        try {
-          const usuarioData = await firstValueFrom(this.firebaseService.obtenerUsuario(usuarioId));
-          const puntosActuales = usuarioData?.puntos || 0;
-      
-          if (puntosActuales < articulo.costo) {
-            alert('No tienes suficientes puntos para comprar este artículo.');
-            return;
-          }
-      
-          const compra = {
-            usuarioId: usuarioId,
-            nombre: articulo.nombre,
-            imagen: articulo.imagen,
-            costo: articulo.costo,
-            categoria: articulo.idCategoria,
-            fechaCompra: new Date()
-          };
-      
-          await this.firebaseService.registrarCompra(compra);
-          await this.firebaseService.actualizarPuntosUsuario(usuarioId, puntosActuales - articulo.costo);
-          alert('¡Compra realizada con éxito!');
-        } catch (error) {
-          console.error('Error durante la compra:', error);
-        }
-      });
   
+        const compra = {
+          usuarioId: usuarioId,
+          nombre: articulo.nombre,
+          imagen: articulo.imagen,
+          costo: articulo.costo,
+          categoria: articulo.idCategoria,
+          fechaCompra: new Date()
+        };
+  
+        await this.firebaseService.registrarCompra(compra);
+        const nuevosPuntos = puntosActuales - articulo.costo;
+  
+        await this.firebaseService.actualizarPuntosUsuario(usuarioId, nuevosPuntos);
+  
+        // ✅ Actualizar los puntos en las cookies
+        this.cookieService.set('puntos', nuevosPuntos.toString());
+  
+        alert('¡Compra realizada con éxito!');
+      } catch (error) {
+        console.error('Error durante la compra:', error);
+      }
     }).catch(err => {
       console.error('Error verificando compra:', err);
       alert('Ocurrió un error verificando la compra.');

@@ -7,6 +7,11 @@ import { ButtonModule } from 'primeng/button';
 import { SidebarModule } from 'primeng/sidebar'
 import { MenuModule } from 'primeng/menu';
 import { RouterModule } from '@angular/router';
+import { Firebase } from '../services/firebase';
+import { CookieService } from 'ngx-cookie-service';
+import { MessagesModule } from 'primeng/messages';
+import { MessageService } from 'primeng/api';
+import { ToastModule } from 'primeng/toast';
 
 @Component({
   selector: 'app-configuraciones',
@@ -17,21 +22,68 @@ import { RouterModule } from '@angular/router';
     ButtonModule,
     SidebarModule,
     MenuModule,
-    RouterModule
+    RouterModule,MessagesModule,ToastModule
   ],
+  providers: [MessageService],
   templateUrl: './configuraciones.html',
   styleUrl: './configuraciones.css'
 })
 export class Configuraciones {
-  constructor(private router: Router) {}
+  constructor(private router: Router,private firebaseService: Firebase, private cookieService: CookieService,private messageService: MessageService) {}
 
   verPassword: boolean = false;
   menuOpen = false;
   selectedItem = 'Inicio'
+  nombres: string = '';
+  apellidos: string = '';
+  password: string = '';
   
-  irAFormulario() {
-    this.router.navigate(['/formulario']);
+  guardarDatos(): void {
+    // Guardar en cookies
+    this.cookieService.set('nombres', this.nombres);
+    this.cookieService.set('apellidos', this.apellidos);
+    this.cookieService.set('password', this.password);
+  
+    // Obtener el ID del usuario desde las cookies
+    const usuarioId = this.cookieService.get('usuarioId');
+    if (!usuarioId) {
+      this.messageService.add({
+        severity: 'error',
+        summary: 'ID no encontrado',
+        detail: 'No se encontró el ID de usuario en las cookies.',
+        life: 3000
+      });
+      return;
+    }
+  
+    // Preparar los nuevos datos
+    const nuevosDatos = {
+      nombres: this.nombres,
+      apellidos: this.apellidos,
+      password: this.password
+    };
+  
+    // Actualizar en Firebase
+    this.firebaseService.actualizarDatosUsuario(usuarioId, nuevosDatos)
+      .then(() => {
+        this.messageService.add({
+          severity: 'success',
+          summary: 'Datos actualizados',
+          detail: 'Tus datos fueron actualizados correctamente ✅',
+          life: 3000
+        });
+      })
+      .catch((error) => {
+        console.error('Error al actualizar en Firebase:', error);
+        this.messageService.add({
+          severity: 'error',
+          summary: 'Error',
+          detail: 'Hubo un error al actualizar tus datos. Intenta nuevamente.',
+          life: 3000
+        });
+      });
   }
+  
 
   ngOnInit(): void {
     const partes = this.router.url.split('/');
@@ -39,6 +91,9 @@ export class Configuraciones {
     if (matchedItem) {
       this.selectedItem = matchedItem.label;
     }
+    this.nombres = this.cookieService.get('nombres') || '';
+    this.apellidos = this.cookieService.get('apellidos') || '';
+    this.password = this.cookieService.get('password') || '';
   }
 
   menuItems = [
@@ -52,7 +107,8 @@ export class Configuraciones {
   ];
   
   logout() {
-    localStorage.clear(); // o lo que uses para manejar sesión
+    localStorage.clear(); 
+    this.cookieService.deleteAll('/');
     this.router.navigate(['/login']);
   }
   

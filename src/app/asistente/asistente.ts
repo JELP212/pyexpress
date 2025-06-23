@@ -7,6 +7,11 @@ import { ButtonModule } from 'primeng/button';
 import { SidebarModule } from 'primeng/sidebar'
 import { MenuModule } from 'primeng/menu';
 import { RouterModule } from '@angular/router';
+import { Firebase } from '../services/firebase';
+import { CookieService } from 'ngx-cookie-service';
+import { MessagesModule } from 'primeng/messages';
+import { MessageService } from 'primeng/api';
+import { ToastModule } from 'primeng/toast';
 
 @Component({
   selector: 'app-asistente',
@@ -17,13 +22,21 @@ import { RouterModule } from '@angular/router';
     ButtonModule,
     SidebarModule,
     MenuModule,
-    RouterModule
+    RouterModule,MessagesModule,ToastModule
   ],
+  providers: [MessageService],
   templateUrl: './asistente.html',
   styleUrl: './asistente.css'
 })
 export class Asistente {
-  constructor(private router: Router, private zone: NgZone) {
+
+  audio = new Audio();
+  audioEnReproduccion: string | null = null;
+  estaPausado = false;
+  estaEscribiendo = false;
+
+
+  constructor(private router: Router, private zone: NgZone,private firebaseService: Firebase, private cookieService: CookieService,private messageService: MessageService) {
     const SpeechRecognition = (window as any).SpeechRecognition || (window as any).webkitSpeechRecognition;
     if (SpeechRecognition) {
       this.recognition = new SpeechRecognition();
@@ -71,7 +84,8 @@ export class Asistente {
   ];
   
   logout() {
-    localStorage.clear(); // o lo que uses para manejar sesión
+    localStorage.clear();
+    this.cookieService.deleteAll('/');
     this.router.navigate(['/login']);
   }
   
@@ -97,24 +111,50 @@ export class Asistente {
     this.mensajes.push({ tipo: 'usuario', texto: textoUsuario });
     this.mensaje = '';
   
+    // ✅ VERIFICAR SI ES EL PRIMER MENSAJE DEL USUARIO
+    const mensajesUsuario = this.mensajes.filter(m => m.tipo === 'usuario');
+    if (mensajesUsuario.length === 1) {
+      const usuarioId = this.cookieService.get('usuarioId');
+      const puntosActuales = Number(this.cookieService.get('puntos')) || 0;
+      const nuevosPuntos = puntosActuales + 2;
+  
+      // ✅ ACTUALIZAR COOKIES Y FIREBASE
+      this.cookieService.set('puntos', nuevosPuntos.toString());
+      if (usuarioId) {
+        await this.firebaseService.actualizarPuntosUsuario(usuarioId, nuevosPuntos);
+      }
+    }
+  
     // Leer la descripción desde localStorage
     const descripcionAgente = localStorage.getItem('descripcionAgente') || 'un asistente especializado';
   
-    // Crear mensaje inicial con contexto
-    const mensajeConContexto = `Te comunicarás con una persona que tiene TDA, entonces ayúdalo. Eres ${descripcionAgente}. ${textoUsuario}`;
+    // Construir resumen del historial reciente de la conversación
+    const historial = this.mensajes
+      .slice(-6)
+      .map(msg => `${msg.tipo === 'usuario' ? 'Usuario' : 'Asistente'}: ${msg.texto}`)
+      .join('\n');
+  
+    const mensajeConContexto = `Te comunicarás con una persona que tiene TDA, entonces ayúdalo. Eres ${descripcionAgente}.
+  Este es el historial reciente de la conversación:
+  ${historial}
+  
+  El usuario acaba de decir: "${textoUsuario}"
+  Responde de forma directa al usuario. No generes imágenes, videos ni otro tipo de multimedia. Máximo 500 caracteres.`;
   
     const headers = {
       'Content-Type': 'application/json',
-      'Authorization': 'Bearer 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' // ⚠️ Solo para desarrollo
+      'Authorization': 'Bearer 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'
     };
   
     const body = {
-      model: "gpt-4",
+      model: "gpt-4.1-nano-2025-04-14",
       messages: [
-        { role: "system", content: "Eres un asistente amigable." },
+        { role: "system", content: "Eres un asistente amigable que ayuda con claridad y paciencia." },
         { role: "user", content: mensajeConContexto }
       ]
     };
+  
+    this.estaEscribiendo = true;
   
     try {
       const res = await fetch('https://api.openai.com/v1/chat/completions', {
@@ -125,21 +165,30 @@ export class Asistente {
   
       const data = await res.json();
       const respuesta = data.choices[0]?.message?.content || 'Sin respuesta';
-  
       this.mensajes.push({ tipo: 'chatgpt', texto: respuesta });
+  
     } catch (err) {
       console.error(err);
       this.mensajes.push({ tipo: 'chatgpt', texto: 'Error al contactar a OpenAI.' });
+  
+    } finally {
+      this.estaEscribiendo = false;
     }
   }
-
+  
+  
   hablar(texto: string) {
-    const speech = new SpeechSynthesisUtterance();
-    speech.text = texto;
-    speech.lang = 'es-PE'; // Puedes usar 'es-ES' si deseas español neutro
-    speech.pitch = 1;
-    speech.rate = 1;
-    window.speechSynthesis.speak(speech);
+    const synth = window.speechSynthesis;
+  
+    // Si ya está hablando, detenerlo o pausarlo
+    if (synth.speaking) {
+      synth.cancel();
+      return;
+    }
+  
+    const utterance = new SpeechSynthesisUtterance(texto);
+    utterance.lang = 'es-PE'; // Español Perú o usa 'es-ES' o 'es-MX' según tu preferencia
+    synth.speak(utterance);
   }
   
 }
